@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,29 @@ serve(async (req) => {
 
   try {
     const { title, keyword, intent, websiteUrl } = await req.json();
+    
+    // Get auth token from request
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader },
+        },
+      }
+    );
+
+    // Get user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      throw new Error('Unauthorized');
+    }
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -99,8 +123,28 @@ The article should be 800-1200 words, engaging, and optimized for both users and
 
     console.log('Successfully generated article');
 
+    // Save article to database
+    const { data: savedArticle, error: saveError } = await supabaseClient
+      .from('articles')
+      .insert({
+        user_id: user.id,
+        title: article.title,
+        keyword: article.keyword,
+        intent,
+        content: article,
+        website_url: websiteUrl,
+        status: 'published'
+      })
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error('Failed to save article:', saveError);
+      throw new Error('Failed to save article');
+    }
+
     return new Response(
-      JSON.stringify({ article }),
+      JSON.stringify({ article, id: savedArticle.id }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

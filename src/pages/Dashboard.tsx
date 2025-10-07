@@ -117,7 +117,7 @@ export default function Dashboard() {
         ),
       });
 
-      toast.success("Article generated successfully!");
+      toast.success("Article generated and saved successfully!");
     } catch (error) {
       console.error("Generation error:", error);
       toast.error("Failed to generate article. Please try again.");

@@ -9,6 +9,7 @@ import Articles from "./pages/Articles";
 import Analytics from "./pages/Analytics";
 import Keywords from "./pages/Keywords";
 import SearchPage from "./pages/SearchPage";
+import ArticleDetail from "./pages/ArticleDetail";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/articles" element={<Articles />} />
+            <Route path="/articles/:id" element={<ArticleDetail />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/keywords" element={<Keywords />} />
             <Route path="/search" element={<SearchPage />} />
