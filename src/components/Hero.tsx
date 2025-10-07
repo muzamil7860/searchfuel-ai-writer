@@ -68,7 +68,7 @@ export const Hero = ({ onScanStart }: HeroProps) => {
                 className="shrink-0"
               >
                 <Zap className="w-5 h-5" />
-                Start Free Scan
+                Scan Your Site
               </Button>
             </div>
           </form>
