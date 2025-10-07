@@ -172,45 +172,42 @@ export default function Dashboard() {
 
       <main className="flex-1 p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            SEO Dashboard
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">
+            Content Research
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-1">
             Scan websites and generate SEO-optimized content
           </p>
         </div>
 
         {/* URL Scanner */}
-        <Card className="p-6 mb-8">
-          <div className="flex gap-4">
+        <Card className="p-4 mb-6 bg-card">
+          <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="url"
                 placeholder="Enter website URL to scan..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleScan()}
-                className="pl-10"
+                className="pl-10 h-10"
               />
             </div>
             <Button
               onClick={handleScan}
               disabled={isScanning}
               variant="hero"
-              size="lg"
+              className="h-10"
             >
               {isScanning ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Scanning...
                 </>
               ) : (
-                <>
-                  <Globe className="w-4 h-4" />
-                  Scan Website
-                </>
+                "Scan Website"
               )}
             </Button>
           </div>
@@ -218,174 +215,144 @@ export default function Dashboard() {
 
         {/* Stats Overview */}
         {scanData && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Ideas</p>
-                    <p className="text-2xl font-bold">
-                      {scanData.blogIdeas.length}
-                    </p>
-                  </div>
-                </div>
-              </Card>
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <Card className="p-4 bg-card">
+              <div className="text-xs text-muted-foreground mb-1">Total Ideas</div>
+              <div className="text-2xl font-bold">{scanData.blogIdeas.length}</div>
+            </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <Check className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Completed</p>
-                    <p className="text-2xl font-bold">
-                      {
-                        scanData.blogIdeas.filter(
-                          (i) => i.status === "completed"
-                        ).length
-                      }
-                    </p>
-                  </div>
-                </div>
-              </Card>
+            <Card className="p-4 bg-card">
+              <div className="text-xs text-muted-foreground mb-1">Completed</div>
+              <div className="text-2xl font-bold">
+                {scanData.blogIdeas.filter((i) => i.status === "completed").length}
+              </div>
+            </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Generating</p>
-                    <p className="text-2xl font-bold">
-                      {
-                        scanData.blogIdeas.filter(
-                          (i) => i.status === "generating"
-                        ).length
-                      }
-                    </p>
-                  </div>
-                </div>
-              </Card>
+            <Card className="p-4 bg-card">
+              <div className="text-xs text-muted-foreground mb-1">Generating</div>
+              <div className="text-2xl font-bold">
+                {scanData.blogIdeas.filter((i) => i.status === "generating").length}
+              </div>
+            </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Pending</p>
-                    <p className="text-2xl font-bold">
-                      {
-                        scanData.blogIdeas.filter((i) => i.status === "pending")
-                          .length
-                      }
-                    </p>
-                  </div>
+            <Card className="p-4 bg-card">
+              <div className="text-xs text-muted-foreground mb-1">Pending</div>
+              <div className="text-2xl font-bold">
+                {scanData.blogIdeas.filter((i) => i.status === "pending").length}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Articles Table */}
+        {scanData && (
+          <Card className="bg-card">
+            <div className="border-b px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Blog Article Ideas
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {scanData.url.replace(/^https?:\/\//, '')}
+                  </p>
                 </div>
-              </Card>
+              </div>
             </div>
 
-            {/* Articles Table */}
-            <Card className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                  Blog Article Ideas
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Scanned from: {scanData.url.replace(/^https?:\/\//, '')}
-                </p>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Keyword</TableHead>
-                    <TableHead>Intent</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {scanData.blogIdeas.map((idea) => (
-                    <TableRow key={idea.id}>
-                      <TableCell className="font-medium max-w-md">
-                        <div>
-                          <p className="font-semibold">{idea.title}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {idea.reason}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {idea.keyword}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            idea.intent === "informational"
-                              ? "bg-blue-500/10 text-blue-600"
-                              : idea.intent === "commercial"
-                              ? "bg-green-500/10 text-green-600"
-                              : "bg-accent/10 text-accent"
-                          }
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b hover:bg-transparent">
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="font-medium">Article Title</TableHead>
+                  <TableHead className="font-medium w-48">Keyword</TableHead>
+                  <TableHead className="font-medium w-32 text-center">Intent</TableHead>
+                  <TableHead className="font-medium w-32 text-center">Status</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {scanData.blogIdeas.map((idea) => (
+                  <TableRow 
+                    key={idea.id}
+                    className="border-b last:border-0"
+                  >
+                    <TableCell className="py-3">
+                      <div className="w-4 h-4 rounded-full border-2 border-border"></div>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="max-w-xl">
+                        <p className="font-medium text-sm text-foreground">
+                          {idea.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                          {idea.reason}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant="outline" 
+                          className="font-normal text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                         >
-                          {idea.intent}
+                          T
                         </Badge>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(idea.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          {idea.status === "pending" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="hero"
-                                onClick={() => handleApprove(idea)}
-                                disabled={generatingIds.has(idea.id)}
-                              >
-                                <Check className="w-4 h-4" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleReject(idea)}
-                              >
-                                <X className="w-4 h-4" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          {idea.status === "generating" && (
-                            <Button size="sm" variant="outline" disabled>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Generating...
-                            </Button>
-                          )}
-                          {idea.status === "completed" && (
-                            <Badge className="bg-green-500/10 text-green-600">
-                              ✓ Ready
-                            </Badge>
-                          )}
-                          {idea.status === "rejected" && (
-                            <Badge className="bg-red-500/10 text-red-600">
-                              Rejected
-                            </Badge>
-                          )}
+                        <span className="text-sm">{idea.keyword}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3 text-center">
+                      <span className="text-sm capitalize">
+                        {idea.intent}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3 text-center">
+                      {idea.status === "pending" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleApprove(idea)}
+                          disabled={generatingIds.has(idea.id)}
+                          className="h-7 text-xs"
+                        >
+                          <Check className="w-3 h-3 mr-1" />
+                          Approve
+                        </Button>
+                      )}
+                      {idea.status === "generating" && (
+                        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>Writing...</span>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </>
+                      )}
+                      {idea.status === "completed" && (
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                          ✓ Ready
+                        </Badge>
+                      )}
+                      {idea.status === "rejected" && (
+                        <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">
+                          Rejected
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      {idea.status === "pending" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleReject(idea)}
+                          className="h-7 w-7 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
         )}
 
         {/* Empty State */}
