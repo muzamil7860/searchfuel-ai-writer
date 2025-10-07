@@ -295,7 +295,7 @@ export default function Dashboard() {
                   Blog Article Ideas
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Scanned from: {new URL(scanData.url).hostname}
+                  Scanned from: {scanData.url.replace(/^https?:\/\//, '')}
                 </p>
               </div>
 
