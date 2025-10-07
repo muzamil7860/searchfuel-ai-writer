@@ -13,10 +13,10 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Articles", href: "/dashboard#articles", icon: FileText },
-  { name: "Analytics", href: "/dashboard#analytics", icon: BarChart3 },
-  { name: "Keywords", href: "/dashboard#keywords", icon: TrendingUp },
-  { name: "Search", href: "/dashboard#search", icon: Search },
+  { name: "Articles", href: "/articles", icon: FileText },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Keywords", href: "/keywords", icon: TrendingUp },
+  { name: "Search", href: "/search", icon: Search },
 ];
 
 export function Sidebar() {
@@ -42,7 +42,7 @@ export function Sidebar() {
         <nav className="flex-1 p-4 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.href.split("#")[0];
+            const isActive = location.pathname === item.href;
 
             return (
               <Link

@@ -167,10 +167,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <Sidebar />
-
-      <main className="flex-1 p-8">
+    <div className="p-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">
@@ -372,7 +369,6 @@ export default function Dashboard() {
             </div>
           </Card>
         )}
-      </main>
     </div>
   );
 }
