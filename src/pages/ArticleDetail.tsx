@@ -8,24 +8,24 @@ import { toast } from "sonner";
 import { ArrowLeft, Copy, Download, ExternalLink, Loader2 } from "lucide-react";
 
 interface InternalLink {
-  anchorText: string;
-  targetUrl: string;
+  title: string;
+  url: string;
+  reason: string;
 }
 
 interface ExternalLink {
-  anchorText: string;
-  targetUrl: string;
+  title: string;
+  url: string;
   reason: string;
 }
 
 interface ArticleContent {
-  title: string;
-  metaDescription: string;
-  content: string;
-  keyword: string;
-  internalLinks: InternalLink[];
-  externalLinks: ExternalLink[];
-  socialCaption: string;
+  seo_title: string;
+  meta_description: string;
+  main_content: string;
+  internal_links?: InternalLink[];
+  external_links?: ExternalLink[];
+  social_caption: string;
 }
 
 interface Article {
@@ -68,15 +68,15 @@ export default function ArticleDetail() {
   };
 
   const handleCopy = () => {
-    if (article?.content.content) {
-      navigator.clipboard.writeText(article.content.content);
+    if (article?.content.main_content) {
+      navigator.clipboard.writeText(article.content.main_content);
       toast.success("Article copied to clipboard!");
     }
   };
 
   const handleDownload = () => {
-    if (article?.content.content) {
-      const blob = new Blob([article.content.content], { type: "text/html" });
+    if (article?.content.main_content) {
+      const blob = new Blob([article.content.main_content], { type: "text/html" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -118,10 +118,10 @@ export default function ArticleDetail() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                {article.content.title}
+                {article.title}
               </h1>
               <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                {article.content.keyword}
+                {article.keyword}
               </Badge>
             </div>
             <div className="flex gap-3">
@@ -143,11 +143,11 @@ export default function ArticleDetail() {
           <div className="space-y-3">
             <div>
               <span className="text-sm font-semibold text-muted-foreground">Title Tag:</span>
-              <p className="text-foreground">{article.content.title}</p>
+              <p className="text-foreground">{article.content.seo_title}</p>
             </div>
             <div>
               <span className="text-sm font-semibold text-muted-foreground">Meta Description:</span>
-              <p className="text-foreground">{article.content.metaDescription}</p>
+              <p className="text-foreground">{article.content.meta_description}</p>
             </div>
           </div>
         </Card>
@@ -156,7 +156,7 @@ export default function ArticleDetail() {
         <Card className="p-8 mb-8 bg-card">
           <div
             className="prose prose-lg max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-a:text-accent"
-            dangerouslySetInnerHTML={{ __html: article.content.content }}
+            dangerouslySetInnerHTML={{ __html: article.content.main_content }}
           />
         </Card>
 
@@ -169,12 +169,13 @@ export default function ArticleDetail() {
               Internal Link Suggestions
             </h3>
             <div className="space-y-3">
-              {article.content.internalLinks.map((link, index) => (
+              {article.content.internal_links?.map((link, index) => (
                 <div key={index} className="p-3 bg-secondary/50 rounded-lg">
-                  <p className="text-sm font-semibold text-foreground mb-1">{link.anchorText}</p>
-                  <p className="text-xs text-muted-foreground break-all">{link.targetUrl}</p>
+                  <p className="text-sm font-semibold text-foreground mb-1">{link.title}</p>
+                  <p className="text-xs text-muted-foreground break-all mb-2">{link.url}</p>
+                  <p className="text-xs text-muted-foreground italic">{link.reason}</p>
                 </div>
-              ))}
+              )) || <p className="text-sm text-muted-foreground">No internal link suggestions available</p>}
             </div>
           </Card>
 
@@ -185,13 +186,13 @@ export default function ArticleDetail() {
               External Backlink Suggestions
             </h3>
             <div className="space-y-3">
-              {article.content.externalLinks.map((link, index) => (
+              {article.content.external_links?.map((link, index) => (
                 <div key={index} className="p-3 bg-secondary/50 rounded-lg">
-                  <p className="text-sm font-semibold text-foreground mb-1">{link.anchorText}</p>
-                  <p className="text-xs text-muted-foreground break-all mb-2">{link.targetUrl}</p>
+                  <p className="text-sm font-semibold text-foreground mb-1">{link.title}</p>
+                  <p className="text-xs text-muted-foreground break-all mb-2">{link.url}</p>
                   <p className="text-xs text-muted-foreground italic">{link.reason}</p>
                 </div>
-              ))}
+              )) || <p className="text-sm text-muted-foreground">No external link suggestions available</p>}
             </div>
           </Card>
         </div>
@@ -199,7 +200,7 @@ export default function ArticleDetail() {
         {/* Social Caption */}
         <Card className="p-6 bg-card">
           <h3 className="text-lg font-bold text-foreground mb-4">Social Media Caption</h3>
-          <p className="text-foreground bg-secondary/50 p-4 rounded-lg">{article.content.socialCaption}</p>
+          <p className="text-foreground bg-secondary/50 p-4 rounded-lg">{article.content.social_caption}</p>
         </Card>
       </div>
     </div>
