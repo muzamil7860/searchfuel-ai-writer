@@ -1,9 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, Minus, Search } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, Loader2, Trash2, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Keyword {
   keyword: string;
@@ -14,31 +18,160 @@ interface Keyword {
   cpc: number;
 }
 
-const sampleKeywords: Keyword[] = [
-  { keyword: "energy efficient windows", searchVolume: 18100, difficulty: 62, intent: "Informational", trend: "up", cpc: 12.45 },
-  { keyword: "replacement windows cost", searchVolume: 14800, difficulty: 58, intent: "Commercial", trend: "up", cpc: 15.32 },
-  { keyword: "double hung windows", searchVolume: 12100, difficulty: 54, intent: "Commercial", trend: "stable", cpc: 11.20 },
-  { keyword: "casement windows", searchVolume: 9900, difficulty: 52, intent: "Commercial", trend: "stable", cpc: 10.85 },
-  { keyword: "patio door replacement", searchVolume: 8100, difficulty: 60, intent: "Commercial", trend: "up", cpc: 14.67 },
-  { keyword: "sliding glass door", searchVolume: 7400, difficulty: 48, intent: "Commercial", trend: "down", cpc: 9.12 },
-  { keyword: "french doors exterior", searchVolume: 6600, difficulty: 55, intent: "Commercial", trend: "stable", cpc: 13.24 },
-  { keyword: "bay windows", searchVolume: 6100, difficulty: 50, intent: "Informational", trend: "stable", cpc: 11.45 },
-  { keyword: "window installation near me", searchVolume: 5900, difficulty: 72, intent: "Transactional", trend: "up", cpc: 18.90 },
-  { keyword: "best replacement windows", searchVolume: 4800, difficulty: 65, intent: "Commercial", trend: "up", cpc: 16.78 },
-  { keyword: "vinyl windows", searchVolume: 4400, difficulty: 46, intent: "Informational", trend: "down", cpc: 8.95 },
-  { keyword: "how to measure for replacement windows", searchVolume: 3900, difficulty: 42, intent: "Informational", trend: "stable", cpc: 5.60 },
-  { keyword: "window replacement cost calculator", searchVolume: 3600, difficulty: 50, intent: "Commercial", trend: "up", cpc: 12.15 },
-  { keyword: "fiberglass windows", searchVolume: 3200, difficulty: 48, intent: "Informational", trend: "stable", cpc: 10.20 },
-  { keyword: "sliding patio door", searchVolume: 2900, difficulty: 44, intent: "Commercial", trend: "stable", cpc: 8.85 },
-  { keyword: "window u-factor", searchVolume: 2400, difficulty: 38, intent: "Informational", trend: "up", cpc: 4.25 },
-  { keyword: "low-e glass windows", searchVolume: 2100, difficulty: 40, intent: "Informational", trend: "up", cpc: 6.80 },
-  { keyword: "bifold patio doors", searchVolume: 1800, difficulty: 52, intent: "Commercial", trend: "up", cpc: 15.40 },
-];
 
 export default function Keywords() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [keywords, setKeywords] = useState<Keyword[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [keywordInput, setKeywordInput] = useState("");
+  const { toast } = useToast();
 
-  const filteredKeywords = sampleKeywords.filter(kw =>
+  // Fetch keywords from database
+  const fetchKeywords = async () => {
+    try {
+      setIsFetching(true);
+      const { data, error } = await supabase
+        .from("keywords")
+        .select("*")
+        .order("search_volume", { ascending: false });
+
+      if (error) throw error;
+
+      // Transform database data to match Keyword interface
+      const transformedKeywords: Keyword[] = (data || []).map((kw) => ({
+        keyword: kw.keyword,
+        searchVolume: kw.search_volume,
+        difficulty: kw.difficulty || 0,
+        intent: (kw.intent as Keyword["intent"]) || "Informational",
+        trend: (kw.trend as Keyword["trend"]) || "stable",
+        cpc: parseFloat(kw.cpc?.toString() || "0"),
+      }));
+
+      setKeywords(transformedKeywords);
+    } catch (error) {
+      console.error("Error fetching keywords:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch keywords from database",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  // Research keywords using DataForSEO
+  const researchKeywords = async () => {
+    if (!keywordInput.trim()) {
+      toast({
+        title: "Input Required",
+        description: "Please enter keywords to research",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Parse keywords (split by newline or comma)
+      const keywordList = keywordInput
+        .split(/[\n,]+/)
+        .map((k) => k.trim())
+        .filter((k) => k.length > 0);
+
+      if (keywordList.length === 0) {
+        throw new Error("No valid keywords found");
+      }
+
+      console.log("Researching keywords:", keywordList);
+
+      const { data, error } = await supabase.functions.invoke("fetch-keywords", {
+        body: {
+          keywords: keywordList,
+          location_code: 2840, // USA
+          language_code: "en",
+        },
+      });
+
+      if (error) throw error;
+
+      console.log("Research complete:", data);
+
+      toast({
+        title: "Success!",
+        description: `Added ${data.count} keywords to your research`,
+      });
+
+      // Clear input and refresh list
+      setKeywordInput("");
+      await fetchKeywords();
+    } catch (error) {
+      console.error("Error researching keywords:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to research keywords",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Delete a keyword
+  const deleteKeyword = async (keyword: string) => {
+    try {
+      const { error } = await supabase
+        .from("keywords")
+        .delete()
+        .eq("keyword", keyword);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted",
+        description: "Keyword removed successfully",
+      });
+
+      await fetchKeywords();
+    } catch (error) {
+      console.error("Error deleting keyword:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete keyword",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load keywords on mount
+  useEffect(() => {
+    fetchKeywords();
+
+    // Set up realtime subscription
+    const channel = supabase
+      .channel("keywords-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "keywords",
+        },
+        () => {
+          console.log("Keywords changed, refreshing...");
+          fetchKeywords();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const filteredKeywords = keywords.filter((kw) =>
     kw.keyword.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -71,32 +204,109 @@ export default function Keywords() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Keywords Research</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track high-value keyword opportunities for your content strategy
+          Research keywords with real search volume, CPC, and competition data from Google Ads
         </p>
       </div>
+
+      {/* Keyword Research Form */}
+      <Card className="p-6 mb-6 bg-card">
+        <h2 className="text-lg font-semibold mb-4 text-foreground">Research New Keywords</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">
+              Enter Keywords (one per line or comma-separated)
+            </label>
+            <Textarea
+              placeholder="energy efficient windows&#10;replacement windows cost&#10;double hung windows"
+              value={keywordInput}
+              onChange={(e) => setKeywordInput(e.target.value)}
+              rows={5}
+              className="resize-none"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={researchKeywords}
+              disabled={isLoading || !keywordInput.trim()}
+              className="flex-1"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Researching...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Research Keywords
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={fetchKeywords}
+              variant="outline"
+              disabled={isFetching}
+            >
+              {isFetching ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 bg-card">
           <p className="text-sm text-muted-foreground mb-1">Total Keywords</p>
-          <p className="text-2xl font-bold text-foreground">{sampleKeywords.length}</p>
+          <p className="text-2xl font-bold text-foreground">
+            {isFetching ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              keywords.length
+            )}
+          </p>
         </Card>
         <Card className="p-4 bg-card">
           <p className="text-sm text-muted-foreground mb-1">Avg. Search Volume</p>
           <p className="text-2xl font-bold text-foreground">
-            {Math.round(sampleKeywords.reduce((acc, kw) => acc + kw.searchVolume, 0) / sampleKeywords.length).toLocaleString()}
+            {isFetching ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : keywords.length > 0 ? (
+              Math.round(
+                keywords.reduce((acc, kw) => acc + kw.searchVolume, 0) / keywords.length
+              ).toLocaleString()
+            ) : (
+              "0"
+            )}
           </p>
         </Card>
         <Card className="p-4 bg-card">
           <p className="text-sm text-muted-foreground mb-1">Avg. Difficulty</p>
           <p className="text-2xl font-bold text-foreground">
-            {Math.round(sampleKeywords.reduce((acc, kw) => acc + kw.difficulty, 0) / sampleKeywords.length)}
+            {isFetching ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : keywords.length > 0 ? (
+              Math.round(
+                keywords.reduce((acc, kw) => acc + kw.difficulty, 0) / keywords.length
+              )
+            ) : (
+              "0"
+            )}
           </p>
         </Card>
         <Card className="p-4 bg-card">
           <p className="text-sm text-muted-foreground mb-1">Avg. CPC</p>
           <p className="text-2xl font-bold text-foreground">
-            ${(sampleKeywords.reduce((acc, kw) => acc + kw.cpc, 0) / sampleKeywords.length).toFixed(2)}
+            {isFetching ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : keywords.length > 0 ? (
+              `$${(keywords.reduce((acc, kw) => acc + kw.cpc, 0) / keywords.length).toFixed(2)}`
+            ) : (
+              "$0.00"
+            )}
           </p>
         </Card>
       </div>
@@ -125,10 +335,18 @@ export default function Keywords() {
               <TableHead>Intent</TableHead>
               <TableHead>Trend</TableHead>
               <TableHead className="text-right">CPC</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredKeywords.length > 0 ? (
+            {isFetching ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                  <p className="text-sm text-muted-foreground mt-2">Loading keywords...</p>
+                </TableCell>
+              </TableRow>
+            ) : filteredKeywords.length > 0 ? (
               filteredKeywords.map((keyword, index) => (
                 <TableRow key={index}>
                   <TableCell className="font-medium text-foreground">{keyword.keyword}</TableCell>
@@ -145,12 +363,29 @@ export default function Keywords() {
                   </TableCell>
                   <TableCell>{getTrendIcon(keyword.trend)}</TableCell>
                   <TableCell className="text-right text-foreground">${keyword.cpc.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteKeyword(keyword.keyword)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No keywords found matching "{searchQuery}"
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  {searchQuery ? (
+                    `No keywords found matching "${searchQuery}"`
+                  ) : (
+                    <div>
+                      <p className="mb-2">No keywords yet</p>
+                      <p className="text-sm">Use the research form above to add keywords</p>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             )}

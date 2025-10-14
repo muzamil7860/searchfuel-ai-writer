@@ -240,6 +240,54 @@ export type Database = {
         }
         Relationships: []
       }
+      keywords: {
+        Row: {
+          competition: number | null
+          cpc: number
+          created_at: string
+          difficulty: number | null
+          id: string
+          intent: string | null
+          keyword: string
+          language_code: string
+          location_code: number
+          search_volume: number
+          trend: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          competition?: number | null
+          cpc?: number
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          intent?: string | null
+          keyword: string
+          language_code?: string
+          location_code?: number
+          search_volume?: number
+          trend?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          competition?: number | null
+          cpc?: number
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          intent?: string | null
+          keyword?: string
+          language_code?: string
+          location_code?: number
+          search_volume?: number
+          trend?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
