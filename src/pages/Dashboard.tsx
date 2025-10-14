@@ -816,12 +816,14 @@ export default function Dashboard() {
               </div>
             </Card>
 
-            <Card className="p-4 bg-card">
-              <div className="text-xs text-muted-foreground mb-1">Value of 100 Visitors/mo</div>
-              <div className="text-2xl font-bold text-green-600">
-                {avgCpc > 0 ? `$${(avgCpc * 100).toFixed(0)}` : "$0"}
-              </div>
-            </Card>
+            {avgCpc * 100 >= 100 && (
+              <Card className="p-4 bg-card">
+                <div className="text-xs text-muted-foreground mb-1">Value of 100 Visitors/mo</div>
+                <div className="text-2xl font-bold text-green-600">
+                  ${(avgCpc * 100).toFixed(0)}
+                </div>
+              </Card>
+            )}
           </div>
         )}
 

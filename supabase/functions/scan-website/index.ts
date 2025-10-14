@@ -181,6 +181,128 @@ Return ONLY a valid JSON array of blog ideas. No markdown, no explanation, just 
 
     console.log('Successfully saved keywords to database');
 
+    // Now fetch real keyword metrics from DataForSEO
+    try {
+      const keywords = ideasWithIds.map((idea: any) => idea.keyword);
+      
+      console.log('Fetching keyword metrics from DataForSEO for:', keywords);
+
+      const DATAFORSEO_LOGIN = Deno.env.get('DATAFORSEO_LOGIN');
+      const DATAFORSEO_PASSWORD = Deno.env.get('DATAFORSEO_PASSWORD');
+
+      if (!DATAFORSEO_LOGIN || !DATAFORSEO_PASSWORD) {
+        console.error('DataForSEO credentials not configured');
+        throw new Error('DataForSEO credentials not configured');
+      }
+
+      // Call DataForSEO API
+      const authString = btoa(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`);
+      const dataforSEOPayload = [
+        {
+          location_code: 2840,
+          language_code: 'en',
+          keywords,
+        },
+      ];
+
+      const dataforSEOResponse = await fetch(
+        'https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${authString}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(dataforSEOPayload),
+        }
+      );
+
+      if (dataforSEOResponse.ok) {
+        const dataforSEOData = await dataforSEOResponse.json();
+        
+        if (dataforSEOData.status_code === 20000) {
+          console.log('Successfully fetched keyword metrics from DataForSEO');
+
+          // Process results and update keywords
+          const tasks = dataforSEOData.tasks || [];
+          const keywordsToUpdate = [];
+
+          for (const task of tasks) {
+            if (!task.result) continue;
+
+            for (const keywordData of task.result) {
+              // Determine keyword intent based on keyword content
+              let intent = 'informational';
+              const kw = keywordData.keyword.toLowerCase();
+              
+              if (kw.includes('buy') || kw.includes('price') || kw.includes('cost') || kw.includes('cheap')) {
+                intent = 'commercial';
+              } else if (kw.includes('near me') || kw.includes('how to') || kw.includes('installation')) {
+                intent = 'transactional';
+              } else if (kw.includes('best') || kw.includes('review') || kw.includes('vs')) {
+                intent = 'commercial';
+              }
+
+              // Calculate difficulty (0-100 scale based on competition)
+              const difficulty = keywordData.competition 
+                ? Math.round(keywordData.competition * 100) 
+                : null;
+
+              // Determine trend based on monthly searches if available
+              let trend = 'stable';
+              if (keywordData.monthly_searches && keywordData.monthly_searches.length >= 2) {
+                const recent = keywordData.monthly_searches.slice(-3);
+                const older = keywordData.monthly_searches.slice(-6, -3);
+                const recentAvg = recent.reduce((sum: number, m: any) => sum + (m.search_volume || 0), 0) / recent.length;
+                const olderAvg = older.reduce((sum: number, m: any) => sum + (m.search_volume || 0), 0) / older.length;
+                
+                if (recentAvg > olderAvg * 1.1) trend = 'up';
+                else if (recentAvg < olderAvg * 0.9) trend = 'down';
+              }
+
+              keywordsToUpdate.push({
+                user_id: user.id,
+                keyword: keywordData.keyword,
+                search_volume: keywordData.search_volume || 0,
+                cpc: keywordData.cpc || 0,
+                competition: keywordData.competition || null,
+                difficulty,
+                intent,
+                trend,
+                location_code: 2840,
+                language_code: 'en',
+              });
+            }
+          }
+
+          // Update keywords with real data
+          if (keywordsToUpdate.length > 0) {
+            const { error: updateError } = await supabase
+              .from('keywords')
+              .upsert(keywordsToUpdate, {
+                onConflict: 'user_id,keyword,location_code',
+                ignoreDuplicates: false,
+              });
+
+            if (updateError) {
+              console.error('Error updating keywords with metrics:', updateError);
+            } else {
+              console.log(`Successfully updated ${keywordsToUpdate.length} keywords with real metrics`);
+            }
+          }
+        } else {
+          console.error('DataForSEO API error:', dataforSEOData.status_message);
+        }
+      } else {
+        const errorText = await dataforSEOResponse.text();
+        console.error('DataForSEO API request failed:', dataforSEOResponse.status, errorText);
+      }
+    } catch (dataforSEOError) {
+      // Log error but don't fail the entire request
+      console.error('Error fetching keyword metrics from DataForSEO:', dataforSEOError);
+      // Keywords are already saved with default values, so continue
+    }
+
     return new Response(
       JSON.stringify({ blogIdeas: ideasWithIds }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
