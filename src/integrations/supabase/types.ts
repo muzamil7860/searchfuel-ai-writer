@@ -164,7 +164,7 @@ export type Database = {
           logo_url: string | null
           mode: string
           onboarding_completed: boolean | null
-          subdomain: string
+          subdomain: string | null
           target_audience: string | null
           theme: string | null
           title: string
@@ -192,7 +192,7 @@ export type Database = {
           logo_url?: string | null
           mode?: string
           onboarding_completed?: boolean | null
-          subdomain: string
+          subdomain?: string | null
           target_audience?: string | null
           theme?: string | null
           title: string
@@ -220,7 +220,7 @@ export type Database = {
           logo_url?: string | null
           mode?: string
           onboarding_completed?: boolean | null
-          subdomain?: string
+          subdomain?: string | null
           target_audience?: string | null
           theme?: string | null
           title?: string
