@@ -18,6 +18,7 @@ interface OnboardingData {
   competitors: Array<{ name: string; website: string }>;
   theme: string;
   subdomain: string;
+  logoUrl: string;
 }
 
 interface BlogOnboardingProps {
@@ -57,6 +58,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
     competitors: [{ name: "", website: "" }],
     theme: "bold-gradient",
     subdomain: "",
+    logoUrl: "",
   });
 
   const totalSteps = 5;
@@ -83,7 +85,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
   const canContinue = () => {
     switch (step) {
       case 1:
-        return formData.companyName && formData.websiteHomepage && formData.industry;
+        return formData.companyName && formData.websiteHomepage && formData.industry && formData.logoUrl;
       case 2:
         return formData.companyDescription.length >= 50 && formData.targetAudience;
       case 3:
@@ -120,6 +122,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
         theme: formData.theme,
         onboarding_completed: true,
         is_published: false,
+        logo_url: formData.logoUrl,
       });
 
       if (error) throw error;
@@ -188,6 +191,20 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
             onChange={(e) => updateField("websiteHomepage", e.target.value)}
             className="mt-1"
           />
+        </div>
+
+        <div>
+          <Label htmlFor="logoUrl">Company Logo URL *</Label>
+          <Input
+            id="logoUrl"
+            placeholder="https://yourdomain.com/logo.png"
+            value={formData.logoUrl}
+            onChange={(e) => updateField("logoUrl", e.target.value)}
+            className="mt-1"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Enter a URL to your company logo (PNG, JPG, or SVG recommended)
+          </p>
         </div>
 
         <div>

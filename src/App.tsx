@@ -12,6 +12,8 @@ import ArticleDetail from "./pages/ArticleDetail";
 import Settings from "./pages/Settings";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
+import PublicBlog from "./pages/PublicBlog";
+import PublicBlogPost from "./pages/PublicBlogPost";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,9 @@ const App = () => (
           <Route path="/search" element={<SearchPage />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
+        {/* Public blog routes */}
+        <Route path="/:subdomain" element={<PublicBlog />} />
+        <Route path="/:subdomain/:slug" element={<PublicBlogPost />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

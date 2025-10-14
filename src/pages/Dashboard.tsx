@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { BlogOnboarding } from "@/components/onboarding/BlogOnboarding";
+import { PublishDialog } from "@/components/PublishDialog";
 import {
   Table,
   TableBody,
@@ -64,6 +65,7 @@ export default function Dashboard() {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [blogForm, setBlogForm] = useState({
     subdomain: "",
     title: "",
@@ -143,21 +145,33 @@ export default function Dashboard() {
     toast.success("Blog updated successfully!");
   };
 
-  const handleTogglePublish = async () => {
+  const handleTogglePublish = () => {
+    if (!blog) return;
+    
+    if (blog.is_published) {
+      // Unpublish directly
+      handleUnpublish();
+    } else {
+      // Show customize link dialog
+      setShowPublishDialog(true);
+    }
+  };
+
+  const handleUnpublish = async () => {
     if (!blog) return;
 
     const { error } = await supabase
       .from("blogs")
-      .update({ is_published: !blog.is_published })
+      .update({ is_published: false })
       .eq("id", blog.id);
 
     if (error) {
-      toast.error("Failed to update blog status");
+      toast.error("Failed to unpublish blog");
       return;
     }
 
     await fetchUserBlog();
-    toast.success(blog.is_published ? "Blog unpublished" : "Blog published!");
+    toast.success("Blog unpublished!");
   };
 
   const handleScan = async () => {
@@ -686,6 +700,18 @@ export default function Dashboard() {
             </div>
           </Card>
         )}
+      </div>
+
+      {showPublishDialog && blog && (
+        <PublishDialog
+          blog={blog}
+          onComplete={() => {
+            setShowPublishDialog(false);
+            fetchUserBlog();
+          }}
+          onCancel={() => setShowPublishDialog(false)}
+        />
+      )}
     </div>
   );
 }

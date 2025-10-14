@@ -157,6 +157,7 @@ export type Database = {
           industry: string | null
           is_published: boolean
           last_post_generated_at: string | null
+          logo_url: string | null
           onboarding_completed: boolean | null
           subdomain: string
           target_audience: string | null
@@ -179,6 +180,7 @@ export type Database = {
           industry?: string | null
           is_published?: boolean
           last_post_generated_at?: string | null
+          logo_url?: string | null
           onboarding_completed?: boolean | null
           subdomain: string
           target_audience?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           industry?: string | null
           is_published?: boolean
           last_post_generated_at?: string | null
+          logo_url?: string | null
           onboarding_completed?: boolean | null
           subdomain?: string
           target_audience?: string | null
