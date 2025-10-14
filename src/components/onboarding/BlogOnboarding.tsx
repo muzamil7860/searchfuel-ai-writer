@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 
 interface OnboardingData {
+  mode: "new_site" | "existing_site";
   companyName: string;
   websiteHomepage: string;
   websiteCta: string;
@@ -49,6 +50,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<OnboardingData>({
+    mode: "new_site",
     companyName: "",
     websiteHomepage: "",
     websiteCta: "",
@@ -61,7 +63,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
     logoUrl: "",
   });
 
-  const totalSteps = 5;
+  const totalSteps = formData.mode === "new_site" ? 6 : 4;
 
   const updateField = (field: keyof OnboardingData, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -85,14 +87,19 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
   const canContinue = () => {
     switch (step) {
       case 1:
-        return formData.companyName && formData.websiteHomepage && formData.industry && formData.logoUrl;
+        return true; // mode is always set
       case 2:
-        return formData.companyDescription.length >= 50 && formData.targetAudience;
+        return formData.companyName && formData.websiteHomepage && formData.industry && (formData.mode === "existing_site" || formData.logoUrl);
       case 3:
-        return formData.competitors.some(c => c.name);
+        return formData.companyDescription.length >= 50 && formData.targetAudience;
       case 4:
-        return formData.theme;
+        return formData.competitors.some(c => c.name);
       case 5:
+        if (formData.mode === "new_site") {
+          return formData.theme;
+        }
+        return true;
+      case 6:
         return formData.subdomain.match(/^[a-z0-9-]+$/);
       default:
         return false;
@@ -109,7 +116,8 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
 
       const { error } = await supabase.from("blogs").insert({
         user_id: user.id,
-        subdomain: formData.subdomain.toLowerCase(),
+        mode: formData.mode,
+        subdomain: formData.mode === "new_site" ? formData.subdomain.toLowerCase() : null,
         title: formData.companyName,
         description: formData.companyDescription,
         company_name: formData.companyName,
@@ -119,10 +127,10 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
         company_description: formData.companyDescription,
         target_audience: formData.targetAudience,
         competitors: formData.competitors.filter(c => c.name),
-        theme: formData.theme,
+        theme: formData.mode === "new_site" ? formData.theme : null,
         onboarding_completed: true,
-        is_published: false,
-        logo_url: formData.logoUrl,
+        is_published: formData.mode === "existing_site",
+        logo_url: formData.mode === "new_site" ? formData.logoUrl : null,
       });
 
       if (error) throw error;
@@ -166,6 +174,75 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
   const renderStep1 = () => (
     <div className="space-y-6">
       <div>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Choose your mode</h2>
+        <p className="text-muted-foreground">How would you like to use SearchFuel?</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card
+          className={`p-6 cursor-pointer transition-all ${
+            formData.mode === "new_site" ? "ring-2 ring-accent" : ""
+          }`}
+          onClick={() => updateField("mode", "new_site")}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <h3 className="text-lg font-semibold">Create New Blog Site</h3>
+            {formData.mode === "new_site" && <Check className="w-5 h-5 text-accent" />}
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            We'll create a beautiful blog site for you at searchfuelblog.com/your-company and automatically generate SEO-optimized articles.
+          </p>
+          <ul className="text-sm space-y-2 text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-accent mt-0.5" />
+              <span>Custom blog design</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-accent mt-0.5" />
+              <span>Auto-published articles</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-accent mt-0.5" />
+              <span>Your branded subdomain</span>
+            </li>
+          </ul>
+        </Card>
+
+        <Card
+          className={`p-6 cursor-pointer transition-all ${
+            formData.mode === "existing_site" ? "ring-2 ring-accent" : ""
+          }`}
+          onClick={() => updateField("mode", "existing_site")}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <h3 className="text-lg font-semibold">Connect Existing Site</h3>
+            {formData.mode === "existing_site" && <Check className="w-5 h-5 text-accent" />}
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Generate SEO-optimized articles for your existing website. You'll publish them manually on your own site.
+          </p>
+          <ul className="text-sm space-y-2 text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-accent mt-0.5" />
+              <span>Use your existing design</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-accent mt-0.5" />
+              <span>Manual publishing control</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-accent mt-0.5" />
+              <span>Keep your domain</span>
+            </li>
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="space-y-6">
+      <div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Tell us about your company</h2>
         <p className="text-muted-foreground">This helps us understand your business and target audience</p>
       </div>
@@ -193,19 +270,21 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
           />
         </div>
 
-        <div>
-          <Label htmlFor="logoUrl">Company Logo URL *</Label>
-          <Input
-            id="logoUrl"
-            placeholder="https://yourdomain.com/logo.png"
-            value={formData.logoUrl}
-            onChange={(e) => updateField("logoUrl", e.target.value)}
-            className="mt-1"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Enter a URL to your company logo (PNG, JPG, or SVG recommended)
-          </p>
-        </div>
+        {formData.mode === "new_site" && (
+          <div>
+            <Label htmlFor="logoUrl">Company Logo URL *</Label>
+            <Input
+              id="logoUrl"
+              placeholder="https://yourdomain.com/logo.png"
+              value={formData.logoUrl}
+              onChange={(e) => updateField("logoUrl", e.target.value)}
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter a URL to your company logo (PNG, JPG, or SVG recommended)
+            </p>
+          </div>
+        )}
 
         <div>
           <Label htmlFor="websiteCta">Website CTA (Optional)</Label>
@@ -238,10 +317,10 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
     </div>
   );
 
-  const renderStep2 = () => (
+  const renderStep3 = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Tell us about your company</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Tell us more</h2>
         <p className="text-muted-foreground">Help us generate relevant content for your audience</p>
       </div>
 
@@ -274,7 +353,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
     </div>
   );
 
-  const renderStep3 = () => (
+  const renderStep4 = () => (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Who are your competitors?</h2>
@@ -326,38 +405,39 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
     </div>
   );
 
-  const renderStep4 = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Choose Your Blog Theme</h2>
-        <p className="text-muted-foreground">Pick a design style for your blog</p>
-      </div>
+  const renderStep5 = () =>
+    formData.mode === "new_site" ? (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Choose Your Blog Theme</h2>
+          <p className="text-muted-foreground">Pick a design style for your blog</p>
+        </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {THEMES.map((theme) => (
-          <Card
-            key={theme.id}
-            className={`cursor-pointer transition-all ${
-              formData.theme === theme.id ? "ring-2 ring-accent" : ""
-            }`}
-            onClick={() => updateField("theme", theme.id)}
-          >
-            <div className={`h-40 rounded-t-lg ${getThemeGradient(theme.id)}`} />
-            <div className="p-4">
-              <div className="flex items-center justify-between">
-                <p className="font-medium text-foreground">{theme.name}</p>
-                {formData.theme === theme.id && (
-                  <Check className="w-5 h-5 text-accent" />
-                )}
+        <div className="grid grid-cols-2 gap-4">
+          {THEMES.map((theme) => (
+            <Card
+              key={theme.id}
+              className={`cursor-pointer transition-all ${
+                formData.theme === theme.id ? "ring-2 ring-accent" : ""
+              }`}
+              onClick={() => updateField("theme", theme.id)}
+            >
+              <div className={`h-40 rounded-t-lg ${getThemeGradient(theme.id)}`} />
+              <div className="p-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-foreground">{theme.name}</p>
+                  {formData.theme === theme.id && (
+                    <Check className="w-5 h-5 text-accent" />
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    ) : null;
 
-  const renderStep5 = () => (
+  const renderStep6 = () => (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Choose your blog URL</h2>
@@ -369,7 +449,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
           <Label htmlFor="subdomain">Your Blog URL *</Label>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm text-muted-foreground whitespace-nowrap">
-              searchfuel.app/
+              searchfuelblog.com/
             </span>
             <Input
               id="subdomain"
@@ -411,6 +491,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
           {step === 3 && renderStep3()}
           {step === 4 && renderStep4()}
           {step === 5 && renderStep5()}
+          {step === 6 && renderStep6()}
 
           <div className="flex gap-4 mt-6">
             {step > 1 ? (
@@ -437,7 +518,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
                 disabled={!canContinue() || loading}
                 className="flex-1"
               >
-                {loading ? "Creating..." : "Claim My Blog URL"}
+                {loading ? "Creating..." : "Complete Setup"}
               </Button>
             )}
           </div>

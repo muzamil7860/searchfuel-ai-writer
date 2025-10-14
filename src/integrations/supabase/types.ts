@@ -158,6 +158,7 @@ export type Database = {
           is_published: boolean
           last_post_generated_at: string | null
           logo_url: string | null
+          mode: string
           onboarding_completed: boolean | null
           subdomain: string
           target_audience: string | null
@@ -181,6 +182,7 @@ export type Database = {
           is_published?: boolean
           last_post_generated_at?: string | null
           logo_url?: string | null
+          mode?: string
           onboarding_completed?: boolean | null
           subdomain: string
           target_audience?: string | null
@@ -204,6 +206,7 @@ export type Database = {
           is_published?: boolean
           last_post_generated_at?: string | null
           logo_url?: string | null
+          mode?: string
           onboarding_completed?: boolean | null
           subdomain?: string
           target_audience?: string | null
