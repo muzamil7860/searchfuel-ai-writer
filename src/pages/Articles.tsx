@@ -114,11 +114,14 @@ export default function Articles() {
               <FileText className="w-8 h-8 text-accent" />
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">
-              No Articles Yet
+              Connect Your Site to Start Publishing Articles
             </h3>
-            <p className="text-muted-foreground">
-              Generate articles from the Dashboard to see them here.
+            <p className="text-muted-foreground mb-6">
+              Scan your website to discover keywords and start generating SEO-optimized content.
             </p>
+            <Button onClick={() => navigate('/dashboard')}>
+              Go to Dashboard
+            </Button>
           </div>
         </Card>
       ) : (

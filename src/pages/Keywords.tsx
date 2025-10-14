@@ -1,13 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, Minus, Search, Loader2, Trash2, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, Loader2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface Keyword {
   keyword: string;
@@ -22,10 +21,9 @@ interface Keyword {
 export default function Keywords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [keywords, setKeywords] = useState<Keyword[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [keywordInput, setKeywordInput] = useState("");
-  const { toast } = useToast();
+  const [isScanning, setIsScanning] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
 
   // Fetch keywords from database
   const fetchKeywords = async () => {
@@ -51,71 +49,46 @@ export default function Keywords() {
       setKeywords(transformedKeywords);
     } catch (error) {
       console.error("Error fetching keywords:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch keywords from database",
-        variant: "destructive",
-      });
+      toast.error("Failed to fetch keywords from database");
     } finally {
       setIsFetching(false);
     }
   };
 
-  // Research keywords using DataForSEO
-  const researchKeywords = async () => {
-    if (!keywordInput.trim()) {
-      toast({
-        title: "Input Required",
-        description: "Please enter keywords to research",
-        variant: "destructive",
-      });
+  // Scan website for keywords
+  const handleScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!websiteUrl.trim()) {
+      toast.error("Please enter a website URL");
       return;
     }
 
+    setIsScanning(true);
     try {
-      setIsLoading(true);
-
-      // Parse keywords (split by newline or comma)
-      const keywordList = keywordInput
-        .split(/[\n,]+/)
-        .map((k) => k.trim())
-        .filter((k) => k.length > 0);
-
-      if (keywordList.length === 0) {
-        throw new Error("No valid keywords found");
+      let url = websiteUrl.trim();
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = `https://${url}`;
       }
 
-      console.log("Researching keywords:", keywordList);
-
-      const { data, error } = await supabase.functions.invoke("fetch-keywords", {
-        body: {
-          keywords: keywordList,
-          location_code: 2840, // USA
-          language_code: "en",
-        },
+      const { data, error } = await supabase.functions.invoke("scan-website", {
+        body: { url },
       });
 
       if (error) throw error;
 
-      console.log("Research complete:", data);
-
-      toast({
-        title: "Success!",
-        description: `Added ${data.count} keywords to your research`,
-      });
-
-      // Clear input and refresh list
-      setKeywordInput("");
-      await fetchKeywords();
+      toast.success("Website scan started! Keywords will appear shortly.");
+      setWebsiteUrl("");
+      
+      // Refresh the keywords list after a short delay
+      setTimeout(() => {
+        fetchKeywords();
+      }, 3000);
     } catch (error) {
-      console.error("Error researching keywords:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to research keywords",
-        variant: "destructive",
-      });
+      console.error("Error scanning website:", error);
+      toast.error("Failed to scan website");
     } finally {
-      setIsLoading(false);
+      setIsScanning(false);
     }
   };
 
@@ -129,19 +102,11 @@ export default function Keywords() {
 
       if (error) throw error;
 
-      toast({
-        title: "Deleted",
-        description: "Keyword removed successfully",
-      });
-
+      toast.success("Keyword removed successfully");
       await fetchKeywords();
     } catch (error) {
       console.error("Error deleting keyword:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete keyword",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete keyword");
     }
   };
 
@@ -202,63 +167,60 @@ export default function Keywords() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Keywords Research</h1>
+        <h1 className="text-2xl font-bold text-foreground">Keywords</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Research keywords with real search volume, CPC, and competition data from Google Ads
+          Keywords discovered from your website analysis
         </p>
       </div>
 
-      {/* Keyword Research Form */}
-      <Card className="p-6 mb-6 bg-card">
-        <h2 className="text-lg font-semibold mb-4 text-foreground">Research New Keywords</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Enter Keywords (one per line or comma-separated)
-            </label>
-            <Textarea
-              placeholder="energy efficient windows&#10;replacement windows cost&#10;double hung windows"
-              value={keywordInput}
-              onChange={(e) => setKeywordInput(e.target.value)}
-              rows={5}
-              className="resize-none"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={researchKeywords}
-              disabled={isLoading || !keywordInput.trim()}
-              className="flex-1"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Researching...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4 mr-2" />
-                  Research Keywords
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={fetchKeywords}
-              variant="outline"
-              disabled={isFetching}
-            >
-              {isFetching ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
+      {isFetching ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
-      </Card>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      ) : keywords.length === 0 ? (
+        <Card className="p-12 text-center bg-card">
+          <div className="max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-accent" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">
+              Analyze Your Site to Discover Keywords
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Enter your website URL to scan for SEO opportunities and keyword insights.
+            </p>
+            <form onSubmit={handleScan} className="space-y-4">
+              <Input
+                type="url"
+                placeholder="https://yourwebsite.com"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="text-center"
+              />
+              <Button
+                type="submit"
+                disabled={isScanning || !websiteUrl.trim()}
+                className="w-full"
+              >
+                {isScanning ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Scanning...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4 mr-2" />
+                    Analyze Website
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
+        </Card>
+      ) : (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 bg-card">
           <p className="text-sm text-muted-foreground mb-1">Total Keywords</p>
           <p className="text-2xl font-bold text-foreground">
@@ -307,12 +269,12 @@ export default function Keywords() {
             ) : (
               "$0.00"
             )}
-          </p>
-        </Card>
-      </div>
+            </p>
+          </Card>
+        </div>
 
-      {/* Search Bar */}
-      <Card className="p-4 mb-6 bg-card">
+        {/* Search Bar */}
+        <Card className="p-4 mb-6 bg-card">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -321,11 +283,11 @@ export default function Keywords() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
-        </div>
-      </Card>
+          </div>
+          </Card>
 
-      {/* Keywords Table */}
-      <Card className="bg-card overflow-hidden">
+          {/* Keywords Table */}
+          <Card className="bg-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -389,9 +351,11 @@ export default function Keywords() {
                 </TableCell>
               </TableRow>
             )}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableBody>
+          </Table>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
