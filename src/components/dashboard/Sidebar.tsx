@@ -59,7 +59,14 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border space-y-1">
+          <a
+            href="mailto:team@trysearchfuel.com"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
+          >
+            <TrendingUp className="w-5 h-5" />
+            Request a Feature
+          </a>
           <Link
             to="/settings"
             className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-all"
