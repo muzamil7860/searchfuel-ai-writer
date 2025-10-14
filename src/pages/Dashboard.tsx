@@ -625,7 +625,7 @@ export default function Dashboard() {
             </Button>
           </div>
         </Card>
-      ) : blog && blog.website_homepage ? (
+      ) : blog ? (
         <Card className="p-6 mb-6 bg-card border-dashed">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -638,10 +638,6 @@ export default function Dashboard() {
                   <Badge variant="outline" className="text-muted-foreground">
                     Disconnected
                   </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Globe className="w-4 h-4" />
-                  <span>{blog.website_homepage}</span>
                 </div>
               </div>
             </div>
