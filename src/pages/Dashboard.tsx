@@ -23,6 +23,7 @@ import {
   Unplug,
   AlertCircle,
 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Label } from "@/components/ui/label";
 import { BlogOnboarding } from "@/components/onboarding/BlogOnboarding";
 import { PublishDialog } from "@/components/PublishDialog";
@@ -75,10 +76,18 @@ interface Blog {
 }
 
 interface AnalyticsData {
-  total_views: number;
-  total_visitors: number;
-  avg_time: number;
+  date: string;
+  views: number;
 }
+
+interface BlogPost {
+  id: string;
+  title: string;
+  published_at: string;
+  views: number;
+}
+
+type DateRange = "7D" | "1M" | "3M" | "6M" | "1Y" | "All";
 
 export default function Dashboard() {
   const [url, setUrl] = useState("");
@@ -88,7 +97,9 @@ export default function Dashboard() {
   
   // Blog management state
   const [blog, setBlog] = useState<Blog | null>(null);
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange>("1M");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -117,14 +128,33 @@ export default function Dashboard() {
     if (data) {
       setBlog(data);
       fetchAnalytics(data.id);
+      fetchBlogPosts(data.id);
+    }
+  };
+
+  const getDateRangeDays = (range: DateRange): number => {
+    switch (range) {
+      case "7D": return 7;
+      case "1M": return 30;
+      case "3M": return 90;
+      case "6M": return 180;
+      case "1Y": return 365;
+      case "All": return 9999;
+      default: return 30;
     }
   };
 
   const fetchAnalytics = async (blogId: string) => {
+    const days = getDateRangeDays(dateRange);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
     const { data, error } = await supabase
       .from("blog_analytics")
-      .select("page_views, unique_visitors, avg_time_on_page")
-      .eq("blog_id", blogId);
+      .select("date, page_views")
+      .eq("blog_id", blogId)
+      .gte("date", startDate.toISOString().split("T")[0])
+      .order("date", { ascending: true });
 
     if (error) {
       console.error("Error fetching analytics:", error);
@@ -132,23 +162,43 @@ export default function Dashboard() {
     }
 
     if (data && data.length > 0) {
-      const totalViews = data.reduce((sum, row) => sum + (row.page_views || 0), 0);
-      const totalVisitors = data.reduce((sum, row) => sum + (row.unique_visitors || 0), 0);
-      const avgTime = data.reduce((sum, row) => sum + (row.avg_time_on_page || 0), 0) / data.length;
-
-      setAnalytics({
-        total_views: totalViews,
-        total_visitors: totalVisitors,
-        avg_time: Math.round(avgTime),
-      });
+      const chartData = data.map((row) => ({
+        date: new Date(row.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        views: row.page_views || 0,
+      }));
+      setAnalytics(chartData);
     } else {
-      setAnalytics({
-        total_views: 0,
-        total_visitors: 0,
-        avg_time: 0,
-      });
+      setAnalytics([]);
     }
   };
+
+  const fetchBlogPosts = async (blogId: string) => {
+    const { data, error } = await supabase
+      .from("blog_posts")
+      .select("id, title, published_at")
+      .eq("blog_id", blogId)
+      .eq("status", "published")
+      .order("published_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching blog posts:", error);
+      return;
+    }
+
+    // For now, set views to 0 as we don't have actual view tracking
+    const posts = (data || []).map((post) => ({
+      ...post,
+      views: 0,
+    }));
+
+    setBlogPosts(posts);
+  };
+
+  useEffect(() => {
+    if (blog) {
+      fetchAnalytics(blog.id);
+    }
+  }, [dateRange]);
 
   const handleDisconnectSite = async () => {
     if (!blog) return;
@@ -162,7 +212,8 @@ export default function Dashboard() {
       if (error) throw error;
 
       setBlog(null);
-      setAnalytics(null);
+      setAnalytics([]);
+      setBlogPosts([]);
       setShowDisconnectDialog(false);
       toast.success("Site disconnected successfully");
     } catch (error: any) {
@@ -591,51 +642,104 @@ export default function Dashboard() {
               </Button>
             </div>
           </Card>
-        ) : analytics ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="p-6 bg-card">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Eye className="w-5 h-5 text-accent" />
+        ) : (
+          <>
+            {/* Traffic Chart */}
+            <Card className="p-6 mb-6 bg-card">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Total Visits</h3>
+                  <p className="text-sm text-muted-foreground">Track your blog traffic over time</p>
+                </div>
+                <div className="flex gap-2">
+                  {(["7D", "1M", "3M", "6M", "1Y", "All"] as DateRange[]).map((range) => (
+                    <Button
+                      key={range}
+                      variant={dateRange === range ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setDateRange(range)}
+                      className="h-8 px-3 text-xs"
+                    >
+                      {range}
+                    </Button>
+                  ))}
                 </div>
               </div>
-              <div className="text-3xl font-bold text-foreground mb-1">
-                {analytics.total_views.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Total Page Views
+              <div className="h-[300px]">
+                {analytics.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analytics}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="date" 
+                        className="text-xs"
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <YAxis 
+                        className="text-xs"
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="views" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    No analytics data available yet
+                  </div>
+                )}
               </div>
             </Card>
 
-            <Card className="p-6 bg-card">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-accent" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-1">
-                {analytics.total_visitors.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Unique Visitors
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-card">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-accent" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-1">
-                {analytics.avg_time}s
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Avg. Time on Page
-              </div>
-            </Card>
-          </div>
-        ) : null}
+            {/* Blog Posts Table */}
+            {blogPosts.length > 0 && (
+              <Card className="p-6 mb-6 bg-card">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Published Blog Posts</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b hover:bg-transparent">
+                      <TableHead className="font-medium">Title</TableHead>
+                      <TableHead className="font-medium w-32">Published</TableHead>
+                      <TableHead className="font-medium w-24 text-right">Views</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {blogPosts.map((post) => (
+                      <TableRow key={post.id} className="border-b last:border-0">
+                        <TableCell className="py-3">
+                          <p className="font-medium text-sm text-foreground">{post.title}</p>
+                        </TableCell>
+                        <TableCell className="py-3 text-sm text-muted-foreground">
+                          {new Date(post.published_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </TableCell>
+                        <TableCell className="py-3 text-sm text-right font-medium">
+                          {post.views.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+          </>
+        )}
 
         {/* Stats Overview */}
         {scanData && (
