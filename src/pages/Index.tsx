@@ -87,7 +87,7 @@ const Index = () => {
 
       if (data?.blogIdeas && data.blogIdeas.length > 0) {
         setSeoResults({
-          url,
+          url: formattedUrl,
           blogIdeas: data.blogIdeas,
         });
         toast.success(`Found ${data.blogIdeas.length} SEO opportunities!`);
