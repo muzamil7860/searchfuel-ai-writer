@@ -94,6 +94,7 @@ export default function Dashboard() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanData, setScanData] = useState<ScanData | null>(null);
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
+  const [avgCpc, setAvgCpc] = useState<number>(0);
   
   // Blog management state
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -113,7 +114,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchUserBlog();
+    fetchKeywordsCpc();
   }, []);
+
+  const fetchKeywordsCpc = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("keywords")
+      .select("cpc")
+      .eq("user_id", user.id);
+
+    if (data && data.length > 0) {
+      const totalCpc = data.reduce((sum, kw) => sum + parseFloat(kw.cpc?.toString() || "0"), 0);
+      const average = totalCpc / data.length;
+      setAvgCpc(average);
+    }
+  };
 
   const fetchUserBlog = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -771,7 +789,7 @@ export default function Dashboard() {
 
         {/* Stats Overview */}
         {scanData && (
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-5 gap-4 mb-6">
             <Card className="p-4 bg-card">
               <div className="text-xs text-muted-foreground mb-1">Total Ideas</div>
               <div className="text-2xl font-bold">{scanData.blogIdeas.length}</div>
@@ -795,6 +813,13 @@ export default function Dashboard() {
               <div className="text-xs text-muted-foreground mb-1">Pending</div>
               <div className="text-2xl font-bold">
                 {scanData.blogIdeas.filter((i) => i.status === "pending").length}
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-card">
+              <div className="text-xs text-muted-foreground mb-1">Value of 100 Visitors/mo</div>
+              <div className="text-2xl font-bold text-green-600">
+                {avgCpc > 0 ? `$${(avgCpc * 100).toFixed(0)}` : "$0"}
               </div>
             </Card>
           </div>

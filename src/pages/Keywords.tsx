@@ -66,10 +66,10 @@ export default function Keywords() {
 
     setIsScanning(true);
     try {
-      let url = websiteUrl.trim();
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        url = `https://${url}`;
-      }
+      // Format URL: add https:// if no protocol is specified, remove www
+      let url = websiteUrl.trim().toLowerCase();
+      url = url.replace(/^(https?:\/\/)?(www\.)?/, '');
+      url = `https://${url}`;
 
       const { data, error } = await supabase.functions.invoke("scan-website", {
         body: { url },
@@ -178,42 +178,47 @@ export default function Keywords() {
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : keywords.length === 0 ? (
-        <Card className="p-12 text-center bg-card">
-          <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-accent" />
+        <Card className="p-12 bg-card">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="text-2xl font-bold text-foreground mb-2">
+                Analyze Your Site to Discover Keywords
+              </h3>
+              <p className="text-muted-foreground">
+                Enter your website URL to scan for SEO opportunities and keyword insights.
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">
-              Analyze Your Site to Discover Keywords
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Enter your website URL to scan for SEO opportunities and keyword insights.
-            </p>
-            <form onSubmit={handleScan} className="space-y-4">
-              <Input
-                type="url"
-                placeholder="https://yourwebsite.com"
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-                className="text-center"
-              />
-              <Button
-                type="submit"
-                disabled={isScanning || !websiteUrl.trim()}
-                className="w-full"
-              >
-                {isScanning ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Scanning...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Analyze Website
-                  </>
-                )}
-              </Button>
+            <form onSubmit={handleScan} className="max-w-xl mx-auto">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  type="text"
+                  placeholder="example.com"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  className="flex-1 h-12 text-base"
+                  required
+                />
+                <Button
+                  type="submit"
+                  disabled={isScanning || !websiteUrl.trim()}
+                  className="h-12 px-6 shrink-0"
+                >
+                  {isScanning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-4 h-4 mr-2" />
+                      Analyze Website
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         </Card>
