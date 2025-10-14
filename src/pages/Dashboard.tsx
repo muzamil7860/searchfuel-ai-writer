@@ -584,7 +584,7 @@ export default function Dashboard() {
       </div>
 
       {/* Connected Site Card */}
-      {blog && (
+      {blog && blog.cms_platform && blog.cms_site_url ? (
         <Card className="p-6 mb-6 bg-card border-accent/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -603,12 +603,12 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Globe className="w-4 h-4" />
                   <a 
-                    href={blog.cms_site_url || blog.website_homepage || "#"}
+                    href={blog.cms_site_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-accent transition-colors flex items-center gap-1"
                   >
-                    {blog.cms_site_url || blog.website_homepage || "No URL"}
+                    {blog.cms_site_url}
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
@@ -625,7 +625,36 @@ export default function Dashboard() {
             </Button>
           </div>
         </Card>
-      )}
+      ) : blog && blog.website_homepage ? (
+        <Card className="p-6 mb-6 bg-card border-dashed">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-lg font-semibold text-foreground">Website Not Connected</h3>
+                  <Badge variant="outline" className="text-muted-foreground">
+                    Disconnected
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Globe className="w-4 h-4" />
+                  <span>{blog.website_homepage}</span>
+                </div>
+              </div>
+            </div>
+            <Button 
+              variant="default"
+              size="sm"
+              onClick={() => setShowOnboarding(true)}
+            >
+              Connect CMS
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
         {/* Analytics / No Site Connected */}
         {!blog ? (
