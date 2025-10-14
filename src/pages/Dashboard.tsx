@@ -17,8 +17,8 @@ import {
   Loader2,
   ExternalLink,
   Settings,
+  ArrowLeft,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { BlogOnboarding } from "@/components/onboarding/BlogOnboarding";
 import {
@@ -62,8 +62,8 @@ export default function Dashboard() {
   
   // Blog management state
   const [blog, setBlog] = useState<Blog | null>(null);
-  const [showBlogDialog, setShowBlogDialog] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [blogForm, setBlogForm] = useState({
     subdomain: "",
     title: "",
@@ -117,7 +117,7 @@ export default function Dashboard() {
     }
 
     setBlog(data);
-    setShowBlogDialog(false);
+    setShowSettings(false);
     toast.success("Blog created successfully!");
   };
 
@@ -139,7 +139,7 @@ export default function Dashboard() {
     }
 
     await fetchUserBlog();
-    setShowBlogDialog(false);
+    setShowSettings(false);
     toast.success("Blog updated successfully!");
   };
 
@@ -280,6 +280,97 @@ export default function Dashboard() {
     }
   };
 
+  if (showSettings && blog) {
+    return (
+      <div className="p-8">
+        <div className="max-w-2xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => setShowSettings(false)}
+            className="mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Blog Settings</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="subdomain">Subdomain *</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    id="subdomain"
+                    value={blogForm.subdomain}
+                    disabled
+                  />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    .searchfuel.app
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Subdomain cannot be changed
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="title">Blog Title *</Label>
+                <Input
+                  id="title"
+                  placeholder="My Awesome Blog"
+                  value={blogForm.title}
+                  onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Input
+                  id="description"
+                  placeholder="A brief description of your blog"
+                  value={blogForm.description}
+                  onChange={(e) => setBlogForm({ ...blogForm, description: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="customDomain">Custom Domain</Label>
+                <Input
+                  id="customDomain"
+                  placeholder="blog.yourdomain.com"
+                  value={blogForm.customDomain}
+                  onChange={(e) => setBlogForm({ ...blogForm, customDomain: e.target.value })}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Optional: Connect your own domain
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowSettings(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleUpdateBlog}
+                  className="flex-1"
+                >
+                  Update Blog
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (showOnboarding) {
     return (
       <div className="p-8">
@@ -376,93 +467,22 @@ export default function Dashboard() {
               )}
               
               {blog ? (
-                <Dialog open={showBlogDialog} onOpenChange={setShowBlogDialog}>
-                  <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setBlogForm({
-                          subdomain: blog.subdomain,
-                          title: blog.title,
-                          description: blog.description || "",
-                          customDomain: blog.custom_domain || "",
-                        });
-                      }}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{blog ? "Blog Settings" : "Create Your Blog"}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <div>
-                      <Label htmlFor="subdomain">Subdomain *</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input
-                          id="subdomain"
-                          placeholder="myblog"
-                          value={blogForm.subdomain}
-                          onChange={(e) => setBlogForm({ ...blogForm, subdomain: e.target.value })}
-                          disabled={!!blog}
-                        />
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">
-                          .searchfuel.app
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {blog ? "Subdomain cannot be changed" : "Choose a unique subdomain for your blog"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="title">Blog Title *</Label>
-                      <Input
-                        id="title"
-                        placeholder="My Awesome Blog"
-                        value={blogForm.title}
-                        onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Input
-                        id="description"
-                        placeholder="A brief description of your blog"
-                        value={blogForm.description}
-                        onChange={(e) => setBlogForm({ ...blogForm, description: e.target.value })}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="customDomain">Custom Domain</Label>
-                      <Input
-                        id="customDomain"
-                        placeholder="blog.yourdomain.com"
-                        value={blogForm.customDomain}
-                        onChange={(e) => setBlogForm({ ...blogForm, customDomain: e.target.value })}
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Optional: Connect your own domain
-                      </p>
-                    </div>
-
-                    <Button 
-                      onClick={blog ? handleUpdateBlog : handleCreateBlog}
-                      className="w-full"
-                    >
-                      {blog ? "Update Blog" : "Create Blog"}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setBlogForm({
+                      subdomain: blog.subdomain,
+                      title: blog.title,
+                      description: blog.description || "",
+                      customDomain: blog.custom_domain || "",
+                    });
+                    setShowSettings(true);
+                  }}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Button>
               ) : (
                 <Button
                   size="sm"
