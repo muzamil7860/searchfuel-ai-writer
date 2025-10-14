@@ -74,8 +74,13 @@ const Index = () => {
     setSeoResults(null);
 
     try {
+      // Add https:// if no protocol is specified
+      const formattedUrl = url.trim().match(/^https?:\/\//) 
+        ? url.trim() 
+        : `https://${url.trim()}`;
+        
       const { data, error } = await supabase.functions.invoke("scan-website", {
-        body: { url },
+        body: { url: formattedUrl },
       });
 
       if (error) throw error;
@@ -176,8 +181,8 @@ const Index = () => {
               <form onSubmit={handleScan} className="max-w-2xl mx-auto mb-12 animate-fade-in">
                 <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
                   <Input
-                    type="url"
-                    placeholder="Enter your website URL (e.g., https://example.com)"
+                    type="text"
+                    placeholder="Enter your website URL (e.g., example.com)"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     className="flex-1 bg-white text-foreground border-0 h-14 text-lg px-6 rounded-xl focus-visible:ring-2 focus-visible:ring-accent"
