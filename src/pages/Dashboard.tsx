@@ -280,20 +280,16 @@ export default function Dashboard() {
     }
   };
 
-  if (showOnboarding) {
-    return (
+  return (
+    <div className="p-8">
       <BlogOnboarding
+        open={showOnboarding}
         onComplete={() => {
           setShowOnboarding(false);
           fetchUserBlog();
         }}
         onCancel={() => setShowOnboarding(false)}
       />
-    );
-  }
-
-  return (
-    <div className="p-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">

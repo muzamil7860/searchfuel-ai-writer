@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ interface OnboardingData {
 }
 
 interface BlogOnboardingProps {
+  open: boolean;
   onComplete: () => void;
   onCancel: () => void;
 }
@@ -44,7 +46,7 @@ const INDUSTRIES = [
   "Other",
 ];
 
-export function BlogOnboarding({ onComplete, onCancel }: BlogOnboardingProps) {
+export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<OnboardingData>({
@@ -384,23 +386,25 @@ export function BlogOnboarding({ onComplete, onCancel }: BlogOnboardingProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <p className="text-sm text-muted-foreground mb-2">SEARCHFUEL SETUP</p>
-          <h1 className="text-4xl font-bold text-foreground">Create your AI SEO engine</h1>
-        </div>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="text-center mb-4">
+            <p className="text-sm text-muted-foreground mb-2">SEARCHFUEL SETUP</p>
+            <DialogTitle className="text-3xl font-bold">Create your AI SEO engine</DialogTitle>
+          </div>
+        </DialogHeader>
 
         {renderStepIndicator()}
 
-        <Card className="p-8 bg-card">
+        <div className="space-y-6">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
           {step === 4 && renderStep4()}
           {step === 5 && renderStep5()}
 
-          <div className="flex gap-4 mt-8">
+          <div className="flex gap-4 mt-6">
             {step > 1 ? (
               <Button variant="outline" onClick={() => setStep(step - 1)}>
                 Back
@@ -429,8 +433,8 @@ export function BlogOnboarding({ onComplete, onCancel }: BlogOnboardingProps) {
               </Button>
             )}
           </div>
-        </Card>
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
