@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { BlogOnboarding } from "@/components/onboarding/BlogOnboarding";
 import {
   Table,
   TableBody,
@@ -62,6 +63,7 @@ export default function Dashboard() {
   // Blog management state
   const [blog, setBlog] = useState<Blog | null>(null);
   const [showBlogDialog, setShowBlogDialog] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [blogForm, setBlogForm] = useState({
     subdomain: "",
     title: "",
@@ -278,6 +280,18 @@ export default function Dashboard() {
     }
   };
 
+  if (showOnboarding) {
+    return (
+      <BlogOnboarding
+        onComplete={() => {
+          setShowOnboarding(false);
+          fetchUserBlog();
+        }}
+        onCancel={() => setShowOnboarding(false)}
+      />
+    );
+  }
+
   return (
     <div className="p-8">
         {/* Header */}
@@ -352,26 +366,25 @@ export default function Dashboard() {
                 </Button>
               )}
               
-              <Dialog open={showBlogDialog} onOpenChange={setShowBlogDialog}>
-                <DialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant={blog ? "outline" : "default"}
-                    onClick={() => {
-                      if (blog) {
+              {blog ? (
+                <Dialog open={showBlogDialog} onOpenChange={setShowBlogDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
                         setBlogForm({
                           subdomain: blog.subdomain,
                           title: blog.title,
                           description: blog.description || "",
                           customDomain: blog.custom_domain || "",
                         });
-                      }
-                    }}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    {blog ? "Settings" : "Create Blog"}
-                  </Button>
-                </DialogTrigger>
+                      }}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Settings
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>{blog ? "Blog Settings" : "Create Your Blog"}</DialogTitle>
@@ -441,6 +454,14 @@ export default function Dashboard() {
                   </div>
                 </DialogContent>
               </Dialog>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setShowOnboarding(true)}
+                >
+                  Create Blog
+                </Button>
+              )}
             </div>
           </div>
         </Card>

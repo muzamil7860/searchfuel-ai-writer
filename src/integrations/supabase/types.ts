@@ -94,39 +94,122 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          blog_id: string
+          content: string
+          created_at: string
+          excerpt: string | null
+          featured_image: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          blog_id: string
+          content: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          blog_id?: string
+          content?: string
+          created_at?: string
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blogs: {
         Row: {
+          auto_post_enabled: boolean | null
+          company_description: string | null
+          company_name: string | null
+          competitors: Json | null
           created_at: string
           custom_domain: string | null
           description: string | null
           id: string
+          industry: string | null
           is_published: boolean
+          last_post_generated_at: string | null
+          onboarding_completed: boolean | null
           subdomain: string
+          target_audience: string | null
+          theme: string | null
           title: string
           updated_at: string
           user_id: string
+          website_cta: string | null
+          website_homepage: string | null
         }
         Insert: {
+          auto_post_enabled?: boolean | null
+          company_description?: string | null
+          company_name?: string | null
+          competitors?: Json | null
           created_at?: string
           custom_domain?: string | null
           description?: string | null
           id?: string
+          industry?: string | null
           is_published?: boolean
+          last_post_generated_at?: string | null
+          onboarding_completed?: boolean | null
           subdomain: string
+          target_audience?: string | null
+          theme?: string | null
           title: string
           updated_at?: string
           user_id: string
+          website_cta?: string | null
+          website_homepage?: string | null
         }
         Update: {
+          auto_post_enabled?: boolean | null
+          company_description?: string | null
+          company_name?: string | null
+          competitors?: Json | null
           created_at?: string
           custom_domain?: string | null
           description?: string | null
           id?: string
+          industry?: string | null
           is_published?: boolean
+          last_post_generated_at?: string | null
+          onboarding_completed?: boolean | null
           subdomain?: string
+          target_audience?: string | null
+          theme?: string | null
           title?: string
           updated_at?: string
           user_id?: string
+          website_cta?: string | null
+          website_homepage?: string | null
         }
         Relationships: []
       }
