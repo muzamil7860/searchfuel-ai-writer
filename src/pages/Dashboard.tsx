@@ -700,18 +700,17 @@ export default function Dashboard() {
             </div>
           </Card>
         )}
-      </div>
 
-      {showPublishDialog && blog && (
-        <PublishDialog
-          blog={blog}
-          onComplete={() => {
-            setShowPublishDialog(false);
-            fetchUserBlog();
-          }}
-          onCancel={() => setShowPublishDialog(false)}
-        />
-      )}
-    </div>
-  );
-}
+        {showPublishDialog && blog && (
+          <PublishDialog
+            blog={blog}
+            onComplete={() => {
+              setShowPublishDialog(false);
+              fetchUserBlog();
+            }}
+            onCancel={() => setShowPublishDialog(false)}
+          />
+        )}
+      </div>
+    );
+  }
