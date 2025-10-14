@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,7 +15,11 @@ import {
   Check,
   X,
   Loader2,
+  ExternalLink,
+  Settings,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -40,11 +44,119 @@ interface ScanData {
   scannedAt: Date;
 }
 
+interface Blog {
+  id: string;
+  subdomain: string;
+  custom_domain: string | null;
+  title: string;
+  description: string | null;
+  is_published: boolean;
+}
+
 export default function Dashboard() {
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [scanData, setScanData] = useState<ScanData | null>(null);
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
+  
+  // Blog management state
+  const [blog, setBlog] = useState<Blog | null>(null);
+  const [showBlogDialog, setShowBlogDialog] = useState(false);
+  const [blogForm, setBlogForm] = useState({
+    subdomain: "",
+    title: "",
+    description: "",
+    customDomain: "",
+  });
+
+  useEffect(() => {
+    fetchUserBlog();
+  }, []);
+
+  const fetchUserBlog = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("blogs")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (data) {
+      setBlog(data);
+    }
+  };
+
+  const handleCreateBlog = async () => {
+    if (!blogForm.subdomain || !blogForm.title) {
+      toast.error("Please fill in subdomain and title");
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("blogs")
+      .insert({
+        user_id: user.id,
+        subdomain: blogForm.subdomain.toLowerCase(),
+        title: blogForm.title,
+        description: blogForm.description || null,
+        custom_domain: blogForm.customDomain || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Failed to create blog: " + error.message);
+      return;
+    }
+
+    setBlog(data);
+    setShowBlogDialog(false);
+    toast.success("Blog created successfully!");
+  };
+
+  const handleUpdateBlog = async () => {
+    if (!blog) return;
+
+    const { error } = await supabase
+      .from("blogs")
+      .update({
+        title: blogForm.title,
+        description: blogForm.description || null,
+        custom_domain: blogForm.customDomain || null,
+      })
+      .eq("id", blog.id);
+
+    if (error) {
+      toast.error("Failed to update blog: " + error.message);
+      return;
+    }
+
+    await fetchUserBlog();
+    setShowBlogDialog(false);
+    toast.success("Blog updated successfully!");
+  };
+
+  const handleTogglePublish = async () => {
+    if (!blog) return;
+
+    const { error } = await supabase
+      .from("blogs")
+      .update({ is_published: !blog.is_published })
+      .eq("id", blog.id);
+
+    if (error) {
+      toast.error("Failed to update blog status");
+      return;
+    }
+
+    await fetchUserBlog();
+    toast.success(blog.is_published ? "Blog unpublished" : "Blog published!");
+  };
 
   const handleScan = async () => {
     if (!url.trim()) {
@@ -177,6 +289,161 @@ export default function Dashboard() {
             Scan websites and generate SEO-optimized content
           </p>
         </div>
+
+        {/* Blog Management Card */}
+        <Card className="p-6 mb-6 bg-card">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <Globe className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-semibold text-foreground">Your Blog</h2>
+              </div>
+              
+              {blog ? (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{blog.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <a 
+                        href={`https://${blog.subdomain}.searchfuel.app`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-accent hover:underline flex items-center gap-1"
+                      >
+                        {blog.subdomain}.searchfuel.app
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <Badge variant={blog.is_published ? "default" : "outline"}>
+                        {blog.is_published ? "Published" : "Draft"}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  {blog.custom_domain && (
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground mb-1">Custom Domain</p>
+                      <a 
+                        href={`https://${blog.custom_domain}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-accent hover:underline flex items-center gap-1"
+                      >
+                        {blog.custom_domain}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Create your blog to start publishing SEO-optimized content
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              {blog && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleTogglePublish}
+                >
+                  {blog.is_published ? "Unpublish" : "Publish"}
+                </Button>
+              )}
+              
+              <Dialog open={showBlogDialog} onOpenChange={setShowBlogDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant={blog ? "outline" : "default"}
+                    onClick={() => {
+                      if (blog) {
+                        setBlogForm({
+                          subdomain: blog.subdomain,
+                          title: blog.title,
+                          description: blog.description || "",
+                          customDomain: blog.custom_domain || "",
+                        });
+                      }
+                    }}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    {blog ? "Settings" : "Create Blog"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{blog ? "Blog Settings" : "Create Your Blog"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div>
+                      <Label htmlFor="subdomain">Subdomain *</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          id="subdomain"
+                          placeholder="myblog"
+                          value={blogForm.subdomain}
+                          onChange={(e) => setBlogForm({ ...blogForm, subdomain: e.target.value })}
+                          disabled={!!blog}
+                        />
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          .searchfuel.app
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {blog ? "Subdomain cannot be changed" : "Choose a unique subdomain for your blog"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="title">Blog Title *</Label>
+                      <Input
+                        id="title"
+                        placeholder="My Awesome Blog"
+                        value={blogForm.title}
+                        onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Input
+                        id="description"
+                        placeholder="A brief description of your blog"
+                        value={blogForm.description}
+                        onChange={(e) => setBlogForm({ ...blogForm, description: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="customDomain">Custom Domain</Label>
+                      <Input
+                        id="customDomain"
+                        placeholder="blog.yourdomain.com"
+                        value={blogForm.customDomain}
+                        onChange={(e) => setBlogForm({ ...blogForm, customDomain: e.target.value })}
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Optional: Connect your own domain
+                      </p>
+                    </div>
+
+                    <Button 
+                      onClick={blog ? handleUpdateBlog : handleCreateBlog}
+                      className="w-full"
+                    >
+                      {blog ? "Update Blog" : "Create Blog"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </Card>
 
         {/* URL Scanner */}
         <Card className="p-4 mb-6 bg-card">

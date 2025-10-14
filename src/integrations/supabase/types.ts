@@ -53,6 +53,83 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_analytics: {
+        Row: {
+          avg_time_on_page: number | null
+          blog_id: string
+          bounce_rate: number | null
+          created_at: string
+          date: string
+          id: string
+          page_views: number
+          unique_visitors: number
+        }
+        Insert: {
+          avg_time_on_page?: number | null
+          blog_id: string
+          bounce_rate?: number | null
+          created_at?: string
+          date: string
+          id?: string
+          page_views?: number
+          unique_visitors?: number
+        }
+        Update: {
+          avg_time_on_page?: number | null
+          blog_id?: string
+          bounce_rate?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          page_views?: number
+          unique_visitors?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_analytics_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blogs: {
+        Row: {
+          created_at: string
+          custom_domain: string | null
+          description: string | null
+          id: string
+          is_published: boolean
+          subdomain: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_domain?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          subdomain: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_domain?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          subdomain?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
