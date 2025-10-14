@@ -26,83 +26,81 @@ export const Hero = ({ onScanStart }: HeroProps) => {
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background with gradient overlay */}
       <div 
-        className="absolute inset-0 bg-cover bg-center opacity-20"
+        className="absolute inset-0 bg-cover bg-center opacity-10"
         style={{ backgroundImage: `url(${heroBackground})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/90" />
       
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-6 py-20">
-        <div className="max-w-4xl mx-auto text-center">
+      <div className="relative z-10 container mx-auto px-6 py-24">
+        <div className="max-w-5xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/15 border border-accent/20 text-accent mb-8 animate-fade-in backdrop-blur-sm">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-semibold">AI-Powered SEO Assistant</span>
+            <span className="text-sm font-semibold tracking-wide">Latest feature just launched</span>
           </div>
 
           {/* Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground mb-6 animate-fade-in leading-tight">
-            Boost Your Search
+          <h1 className="text-6xl md:text-8xl font-black text-primary-foreground mb-8 animate-fade-in leading-[0.95] tracking-tight">
+            Enhance your
             <br />
-            <span className="bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent">
-              Rankings on Autopilot
+            <span className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 bg-clip-text text-transparent">
+              visibility by using AI.
             </span>
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-primary-foreground/80 mb-12 max-w-2xl mx-auto animate-fade-in">
-            SearchFuel analyzes your website and creates SEO-optimized content that drives traffic and converts visitors into customers.
+          <p className="text-xl md:text-2xl text-primary-foreground/70 mb-12 max-w-3xl mx-auto animate-fade-in font-medium leading-relaxed">
+            Effortlessly boost your website's presence with AI — blending intelligent technology and easy-to-use SEO solutions.
           </p>
 
           {/* URL Input Form */}
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-12 animate-fade-in">
-            <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
+          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-16 animate-fade-in">
+            <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
               <Input
                 type="text"
-                placeholder="Enter your website URL (e.g., example.com)"
+                placeholder="yourwebsite.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="flex-1 bg-white text-foreground border-0 h-14 text-lg px-6 rounded-xl focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex-1 bg-white text-foreground border-0 h-16 text-lg px-6 rounded-xl focus-visible:ring-2 focus-visible:ring-accent font-medium"
                 required
               />
               <Button
                 type="submit"
-                variant="hero"
+                className="shrink-0 h-16 px-8 text-base font-semibold rounded-xl bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg hover:shadow-xl transition-all"
                 size="lg"
-                className="shrink-0"
               >
-                <Zap className="w-5 h-5" />
-                Scan Your Site
+                Get Started Free
               </Button>
             </div>
           </form>
 
           {/* Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto animate-fade-in">
-            <div className="flex items-center justify-center gap-3 text-primary-foreground/90">
-              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-accent" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in">
+            <div className="flex flex-col items-center gap-3 text-primary-foreground/80 group">
+              <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center group-hover:bg-accent/25 transition-colors">
+                <TrendingUp className="w-6 h-6 text-accent" />
               </div>
-              <span className="font-medium">Instant Analysis</span>
+              <span className="font-semibold text-base">Instant Analysis</span>
             </div>
-            <div className="flex items-center justify-center gap-3 text-primary-foreground/90">
-              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-accent" />
+            <div className="flex flex-col items-center gap-3 text-primary-foreground/80 group">
+              <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center group-hover:bg-accent/25 transition-colors">
+                <Sparkles className="w-6 h-6 text-accent" />
               </div>
-              <span className="font-medium">AI-Generated Content</span>
+              <span className="font-semibold text-base">AI-Generated Content</span>
             </div>
-            <div className="flex items-center justify-center gap-3 text-primary-foreground/90">
-              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-accent" />
+            <div className="flex flex-col items-center gap-3 text-primary-foreground/80 group">
+              <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center group-hover:bg-accent/25 transition-colors">
+                <Zap className="w-6 h-6 text-accent" />
               </div>
-              <span className="font-medium">One-Click Publishing</span>
+              <span className="font-semibold text-base">One-Click Publishing</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
+      <div className="absolute top-20 left-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
     </div>
   );
