@@ -253,16 +253,23 @@ const Index = () => {
                 We've identified {seoResults.blogIdeas.length} high-potential keywords and content opportunities to boost your rankings.
               </p>
               
-              {!user && (
-                <Card className="p-6 bg-accent/5 border-accent/20">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Want to automatically generate articles for these opportunities?
-                  </p>
-                  <Button onClick={handleSignUpToGenerate} size="lg" className="bg-accent hover:bg-accent/90">
-                    Sign Up to Generate Articles
-                  </Button>
-                </Card>
-              )}
+              {/* Get More Traffic CTA */}
+              <Card className="p-6 bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  Ready to Get More Traffic?
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Sign in to automatically generate SEO-optimized articles and start ranking higher in search results.
+                </p>
+                <Button 
+                  onClick={() => navigate("/auth?mode=signin")} 
+                  size="lg" 
+                  className="bg-accent hover:bg-accent/90"
+                >
+                  <Zap className="w-5 h-5 mr-2" />
+                  Get More Traffic
+                </Button>
+              </Card>
             </div>
 
             {/* Blog Ideas Grid */}
@@ -304,22 +311,6 @@ const Index = () => {
               })}
             </div>
 
-            {/* CTA at bottom */}
-            {!user && (
-              <div className="max-w-2xl mx-auto mt-12 text-center">
-                <Button onClick={handleSignUpToGenerate} size="lg" className="bg-accent hover:bg-accent/90">
-                  Sign Up to Start Generating Content
-                </Button>
-              </div>
-            )}
-
-            {user && (
-              <div className="max-w-2xl mx-auto mt-12 text-center">
-                <Button onClick={() => navigate("/dashboard")} size="lg" className="bg-accent hover:bg-accent/90">
-                  Go to Dashboard to Generate Articles
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       )}
