@@ -23,7 +23,7 @@ import {
   Unplug,
   AlertCircle,
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { Label } from "@/components/ui/label";
 import { BlogOnboarding } from "@/components/onboarding/BlogOnboarding";
 import { PublishDialog } from "@/components/PublishDialog";
@@ -590,20 +590,20 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-background min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">
           Dashboard
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Monitor your content performance
+        <p className="text-sm text-muted-foreground mt-2">
+          Monitor your content performance and SEO metrics
         </p>
       </div>
 
       {/* Connected Site Card */}
       {blog && blog.cms_platform && blog.cms_site_url ? (
-        <Card className="p-6 mb-6 bg-card border-accent/20">
+        <Card className="p-6 mb-6 bg-card shadow-sm border-l-4 border-l-accent">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center text-2xl">
@@ -614,7 +614,7 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-foreground">
                     {getCMSName(blog.cms_platform)} Site Connected
                   </h3>
-                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                  <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800">
                     Active
                   </Badge>
                 </div>
@@ -624,7 +624,7 @@ export default function Dashboard() {
                     href={blog.cms_site_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-accent transition-colors flex items-center gap-1"
+                    className="hover:text-accent transition-colors flex items-center gap-1 font-medium"
                   >
                     {blog.cms_site_url}
                     <ExternalLink className="w-3 h-3" />
@@ -636,7 +636,7 @@ export default function Dashboard() {
               variant="outline" 
               size="sm"
               onClick={() => setShowDisconnectDialog(true)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               <Unplug className="w-4 h-4 mr-2" />
               Disconnect
@@ -644,7 +644,7 @@ export default function Dashboard() {
           </div>
         </Card>
       ) : blog ? (
-        <Card className="p-6 mb-6 bg-card border-dashed">
+        <Card className="p-6 mb-6 bg-card shadow-sm border-dashed">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
@@ -672,7 +672,7 @@ export default function Dashboard() {
 
         {/* Analytics / No Site Connected */}
         {!blog ? (
-          <Card className="p-12 text-center bg-card">
+          <Card className="p-12 text-center bg-card shadow-sm">
             <div className="max-w-md mx-auto">
               <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
                 <Globe className="w-8 h-8 text-accent" />
@@ -691,7 +691,7 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Traffic Chart */}
-            <Card className="p-6 mb-6 bg-card">
+            <Card className="p-6 mb-6 bg-card shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">Total Visits</h3>
@@ -701,7 +701,7 @@ export default function Dashboard() {
                   {(["7D", "1M", "3M", "6M", "1Y", "All"] as DateRange[]).map((range) => (
                     <Button
                       key={range}
-                      variant={dateRange === range ? "default" : "outline"}
+                      variant={dateRange === range ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setDateRange(range)}
                       className="h-8 px-3 text-xs"
@@ -714,33 +714,41 @@ export default function Dashboard() {
               <div className="h-[300px]">
                 {analytics.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={analytics}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <AreaChart data={analytics}>
+                      <defs>
+                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
                       <XAxis 
                         dataKey="date" 
                         className="text-xs"
                         stroke="hsl(var(--muted-foreground))"
+                        tick={{ fontSize: 12 }}
                       />
                       <YAxis 
                         className="text-xs"
                         stroke="hsl(var(--muted-foreground))"
+                        tick={{ fontSize: 12 }}
                       />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: "hsl(var(--card))",
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
                         }}
                       />
-                      <Line 
+                      <Area 
                         type="monotone" 
                         dataKey="views" 
-                        stroke="hsl(var(--primary))" 
+                        stroke="hsl(var(--accent))" 
                         strokeWidth={2}
-                        dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                        activeDot={{ r: 6 }}
+                        fill="url(#colorViews)"
                       />
-                    </LineChart>
+                    </AreaChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -752,30 +760,30 @@ export default function Dashboard() {
 
             {/* Blog Posts Table */}
             {blogPosts.length > 0 && (
-              <Card className="p-6 mb-6 bg-card">
+              <Card className="p-6 mb-6 bg-card shadow-sm">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Published Blog Posts</h3>
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b hover:bg-transparent">
-                      <TableHead className="font-medium">Title</TableHead>
-                      <TableHead className="font-medium w-32">Published</TableHead>
-                      <TableHead className="font-medium w-24 text-right">Views</TableHead>
+                    <TableRow className="border-b hover:bg-transparent bg-muted/20">
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide">Title</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide w-32">Published</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide w-24 text-right">Views</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {blogPosts.map((post) => (
-                      <TableRow key={post.id} className="border-b last:border-0">
-                        <TableCell className="py-3">
+                      <TableRow key={post.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                        <TableCell className="py-4">
                           <p className="font-medium text-sm text-foreground">{post.title}</p>
                         </TableCell>
-                        <TableCell className="py-3 text-sm text-muted-foreground">
+                        <TableCell className="py-4 text-sm text-muted-foreground">
                           {new Date(post.published_at).toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
                           })}
                         </TableCell>
-                        <TableCell className="py-3 text-sm text-right font-medium">
+                        <TableCell className="py-4 text-sm text-right font-semibold">
                           {post.views.toLocaleString()}
                         </TableCell>
                       </TableRow>
@@ -790,36 +798,50 @@ export default function Dashboard() {
         {/* Stats Overview */}
         {scanData && (
           <div className="grid grid-cols-5 gap-4 mb-6">
-            <Card className="p-4 bg-card">
-              <div className="text-xs text-muted-foreground mb-1">Total Ideas</div>
-              <div className="text-2xl font-bold">{scanData.blogIdeas.length}</div>
+            <Card className="p-5 bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Ideas</div>
+                <Badge variant="secondary" className="text-xs">{scanData.blogIdeas.length}</Badge>
+              </div>
+              <div className="text-3xl font-bold text-foreground">{scanData.blogIdeas.length}</div>
             </Card>
 
-            <Card className="p-4 bg-card">
-              <div className="text-xs text-muted-foreground mb-1">Completed</div>
-              <div className="text-2xl font-bold">
+            <Card className="p-5 bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Completed</div>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                  {scanData.blogIdeas.filter((i) => i.status === "completed").length}
+                </Badge>
+              </div>
+              <div className="text-3xl font-bold text-foreground">
                 {scanData.blogIdeas.filter((i) => i.status === "completed").length}
               </div>
             </Card>
 
-            <Card className="p-4 bg-card">
-              <div className="text-xs text-muted-foreground mb-1">Generating</div>
-              <div className="text-2xl font-bold">
+            <Card className="p-5 bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Generating</div>
+                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+              </div>
+              <div className="text-3xl font-bold text-foreground">
                 {scanData.blogIdeas.filter((i) => i.status === "generating").length}
               </div>
             </Card>
 
-            <Card className="p-4 bg-card">
-              <div className="text-xs text-muted-foreground mb-1">Pending</div>
-              <div className="text-2xl font-bold">
+            <Card className="p-5 bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pending</div>
+                <Clock className="w-3 h-3 text-muted-foreground" />
+              </div>
+              <div className="text-3xl font-bold text-foreground">
                 {scanData.blogIdeas.filter((i) => i.status === "pending").length}
               </div>
             </Card>
 
             {avgCpc * 100 >= 100 && (
-              <Card className="p-4 bg-card">
-                <div className="text-xs text-muted-foreground mb-1">Value of 100 Visitors/mo</div>
-                <div className="text-2xl font-bold text-green-600">
+              <Card className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 shadow-sm hover:shadow-md transition-shadow border-green-200 dark:border-green-800">
+                <div className="text-xs font-medium text-green-700 dark:text-green-400 uppercase tracking-wide mb-2">Est. Value (100 Visitors/mo)</div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400">
                   ${(avgCpc * 100).toFixed(0)}
                 </div>
               </Card>
@@ -829,14 +851,14 @@ export default function Dashboard() {
 
         {/* Articles Table */}
         {scanData && (
-          <Card className="bg-card">
-            <div className="border-b px-6 py-4">
+          <Card className="bg-card shadow-sm">
+            <div className="border-b px-6 py-4 bg-muted/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-foreground">
+                  <h2 className="text-base font-semibold text-foreground">
                     Blog Article Ideas
                   </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {scanData.url.replace(/^https?:\/\//, '')}
                   </p>
                 </div>
@@ -845,12 +867,12 @@ export default function Dashboard() {
 
             <Table>
               <TableHeader>
-                <TableRow className="border-b hover:bg-transparent">
+                <TableRow className="border-b hover:bg-transparent bg-muted/20">
                   <TableHead className="w-12"></TableHead>
-                  <TableHead className="font-medium">Article Title</TableHead>
-                  <TableHead className="font-medium w-48">Keyword</TableHead>
-                  <TableHead className="font-medium w-32 text-center">Intent</TableHead>
-                  <TableHead className="font-medium w-32 text-center">Status</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wide">Article Title</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wide w-48">Keyword</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wide w-32 text-center">Intent</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wide w-32 text-center">Status</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -858,76 +880,75 @@ export default function Dashboard() {
                 {scanData.blogIdeas.map((idea) => (
                   <TableRow 
                     key={idea.id}
-                    className="border-b last:border-0"
+                    className="border-b last:border-0 hover:bg-muted/20 transition-colors"
                   >
-                    <TableCell className="py-3">
-                      <div className="w-4 h-4 rounded-full border-2 border-border"></div>
+                    <TableCell className="py-4">
+                      <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30"></div>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="py-4">
                       <div className="max-w-xl">
-                        <p className="font-medium text-sm text-foreground">
+                        <p className="font-medium text-sm text-foreground leading-snug">
                           {idea.title}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                        <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">
                           {idea.reason}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="py-4">
                       <div className="flex items-center gap-2">
                         <Badge 
-                          variant="outline" 
-                          className="font-normal text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          variant="secondary" 
+                          className="font-medium text-xs"
                         >
-                          T
+                          {idea.keyword}
                         </Badge>
-                        <span className="text-sm">{idea.keyword}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 text-center">
-                      <span className="text-sm capitalize">
+                    <TableCell className="py-4 text-center">
+                      <Badge variant="outline" className="text-xs capitalize">
                         {idea.intent}
-                      </span>
+                      </Badge>
                     </TableCell>
-                    <TableCell className="py-3 text-center">
+                    <TableCell className="py-4 text-center">
                       {idea.status === "pending" && (
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="default"
                           onClick={() => handleApprove(idea)}
                           disabled={generatingIds.has(idea.id)}
-                          className="h-7 text-xs"
+                          className="h-8 text-xs"
                         >
                           <Check className="w-3 h-3 mr-1" />
                           Approve
                         </Button>
                       )}
                       {idea.status === "generating" && (
-                        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          <span>Writing...</span>
+                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="font-medium">Writing...</span>
                         </div>
                       )}
                       {idea.status === "completed" && (
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                           ✓ Ready
                         </Badge>
                       )}
                       {idea.status === "rejected" && (
-                        <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">
+                        <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                           Rejected
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="py-3">
+                    <TableCell className="py-4">
                       {idea.status === "pending" && (
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => handleReject(idea)}
-                          className="h-7 w-7 p-0"
+                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-4 h-4" />
                         </Button>
                       )}
                     </TableCell>
@@ -940,7 +961,7 @@ export default function Dashboard() {
 
         {/* Backlink Settings */}
         {blog && (
-          <Card className="p-6 mb-6 bg-card">
+          <Card className="p-6 mb-6 bg-card shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-1">Backlink Settings</h3>
@@ -962,7 +983,7 @@ export default function Dashboard() {
 
         {/* Subscription */}
         {blog && (
-          <Card className="p-6 mb-6 bg-card">
+          <Card className="p-6 mb-6 bg-card shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-1">Subscription</h3>
