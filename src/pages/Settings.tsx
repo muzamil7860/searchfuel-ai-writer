@@ -8,14 +8,29 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
+import { BacklinkSettings } from "@/components/settings/BacklinkSettings";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Settings() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [blogId, setBlogId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      
+      // Load user's blog
+      if (session?.user) {
+        supabase
+          .from("blogs")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .single()
+          .then(({ data }) => {
+            if (data) setBlogId(data.id);
+          });
+      }
     });
   }, []);
 
@@ -37,12 +52,90 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-8">
         <div>
           <h1 className="text-2xl font-semibold">Settings</h1>
         </div>
 
-        {/* Subscription Section */}
+        <Tabs defaultValue="account" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="backlinks">Backlinks</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="account" className="space-y-6 mt-6">
+            {/* Organization Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Organization</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center py-8">
+                <p className="text-muted-foreground mb-4">No organization found</p>
+                <Button variant="default" className="bg-[#8B7355] hover:bg-[#8B7355]/90 text-white">
+                  Set Up Organization
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Account Settings Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    value={user?.email || ""}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+
+                <div className="pt-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Logout</span>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </Button>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-destructive">Delete Account</span>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={handleDeleteAccount}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="backlinks" className="mt-6">
+            {blogId ? (
+              <BacklinkSettings blogId={blogId} />
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center py-12">
+                  <p className="text-muted-foreground">Complete blog setup to configure backlinks</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="subscription" className="space-y-6 mt-6">
+            {/* Subscription Section */}
         <Card>
           <CardHeader>
             <CardTitle>Subscription</CardTitle>
@@ -89,61 +182,8 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Organization Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Organization</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center py-8">
-            <p className="text-muted-foreground mb-4">No organization found</p>
-            <Button variant="default" className="bg-[#8B7355] hover:bg-[#8B7355]/90 text-white">
-              Set Up Organization
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Account Settings Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                value={user?.email || ""}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
-            <div className="pt-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Logout</span>
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-destructive">Delete Account</span>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={handleDeleteAccount}
-                >
-                  Delete
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

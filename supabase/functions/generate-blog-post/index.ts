@@ -54,6 +54,19 @@ serve(async (req) => {
 
     for (const blog of blogsToProcess) {
       try {
+        // Prepare backlink context
+        const targetPages = blog.target_pages || [];
+        const backlinkKeywords = targetPages
+          .flatMap((page: any) => page.keywords || [])
+          .join(", ");
+        
+        const backlinkContext = targetPages.length > 0
+          ? `\n\nNatural Linking Opportunities:
+- Naturally mention these topics where relevant: ${backlinkKeywords}
+- Write flowing content where references to these topics feel organic
+- Include these mentions 2-3 times throughout the post if contextually appropriate`
+          : "";
+
         // Generate blog post using Lovable AI
         const systemPrompt = `You are an expert SEO content writer. Create a comprehensive, engaging blog post for ${blog.company_name}.
 
@@ -71,7 +84,7 @@ Requirements:
 - Use natural keyword integration
 - Include actionable insights and examples
 - Make it valuable for the target audience
-- Use markdown formatting for structure
+- Use markdown formatting for structure${backlinkContext}
 
 Focus on topics related to their industry that would help their target audience.`;
 
@@ -117,6 +130,47 @@ Focus on topics related to their industry that would help their target audience.
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, "");
 
+        // Insert backlinks into content
+        let processedContent = postData.content;
+        let linksInserted = 0;
+        const maxLinks = blog.max_links_per_post || 5;
+        const insertedLinks: any[] = [];
+
+        if (targetPages.length > 0 && blog.backlink_strategy !== 'disabled') {
+          // Sort pages by priority
+          const priorityOrder: any = { high: 3, medium: 2, low: 1 };
+          const sortedPages = [...targetPages].sort(
+            (a: any, b: any) => (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0)
+          );
+
+          for (const page of sortedPages) {
+            if (linksInserted >= maxLinks) break;
+
+            for (const keyword of page.keywords || []) {
+              if (linksInserted >= maxLinks) break;
+
+              // Find first occurrence of keyword that's not already linked
+              const regex = new RegExp(`\\b${keyword}\\b(?![^\\[]*\\])`, 'i');
+              const match = processedContent.match(regex);
+
+              if (match) {
+                const matchText = match[0];
+                const link = `[${matchText}](${page.url})`;
+                processedContent = processedContent.replace(regex, link);
+                linksInserted++;
+                insertedLinks.push({
+                  keyword: matchText,
+                  url: page.url,
+                  priority: page.priority,
+                });
+                break; // Move to next page after inserting one link
+              }
+            }
+          }
+        }
+
+        console.log(`Inserted ${linksInserted} backlinks into post: ${insertedLinks.map(l => l.keyword).join(", ")}`);
+
         // Insert blog post
         const { data: post, error: insertError } = await supabase
           .from("blog_posts")
@@ -125,7 +179,7 @@ Focus on topics related to their industry that would help their target audience.
             title: postData.title,
             slug,
             excerpt: postData.excerpt,
-            content: postData.content,
+            content: processedContent,
             status: "published",
             published_at: new Date().toISOString(),
           })
@@ -155,6 +209,8 @@ Focus on topics related to their industry that would help their target audience.
           blogId: blog.id,
           postId: post.id,
           title: postData.title,
+          backlinksInserted: linksInserted,
+          links: insertedLinks,
           success: true,
         });
 

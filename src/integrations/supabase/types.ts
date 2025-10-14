@@ -147,6 +147,7 @@ export type Database = {
       blogs: {
         Row: {
           auto_post_enabled: boolean | null
+          backlink_strategy: string | null
           cms_credentials: Json | null
           cms_platform: string | null
           cms_site_url: string | null
@@ -162,10 +163,12 @@ export type Database = {
           last_post_generated_at: string | null
           last_sync_at: string | null
           logo_url: string | null
+          max_links_per_post: number | null
           mode: string
           onboarding_completed: boolean | null
           subdomain: string | null
           target_audience: string | null
+          target_pages: Json | null
           theme: string | null
           title: string
           updated_at: string
@@ -175,6 +178,7 @@ export type Database = {
         }
         Insert: {
           auto_post_enabled?: boolean | null
+          backlink_strategy?: string | null
           cms_credentials?: Json | null
           cms_platform?: string | null
           cms_site_url?: string | null
@@ -190,10 +194,12 @@ export type Database = {
           last_post_generated_at?: string | null
           last_sync_at?: string | null
           logo_url?: string | null
+          max_links_per_post?: number | null
           mode?: string
           onboarding_completed?: boolean | null
           subdomain?: string | null
           target_audience?: string | null
+          target_pages?: Json | null
           theme?: string | null
           title: string
           updated_at?: string
@@ -203,6 +209,7 @@ export type Database = {
         }
         Update: {
           auto_post_enabled?: boolean | null
+          backlink_strategy?: string | null
           cms_credentials?: Json | null
           cms_platform?: string | null
           cms_site_url?: string | null
@@ -218,10 +225,12 @@ export type Database = {
           last_post_generated_at?: string | null
           last_sync_at?: string | null
           logo_url?: string | null
+          max_links_per_post?: number | null
           mode?: string
           onboarding_completed?: boolean | null
           subdomain?: string | null
           target_audience?: string | null
+          target_pages?: Json | null
           theme?: string | null
           title?: string
           updated_at?: string
