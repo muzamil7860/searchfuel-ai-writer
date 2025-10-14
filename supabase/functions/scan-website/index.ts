@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,6 +48,20 @@ serve(async (req) => {
     
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
+    }
+
+    // Get auth header and create Supabase client
+    const authHeader = req.headers.get('Authorization');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader! } }
+    });
+
+    // Get user from auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('Unauthorized');
     }
 
     console.log('Scanning website:', url);
@@ -135,6 +150,36 @@ Return ONLY a valid JSON array of blog ideas. No markdown, no explanation, just 
     }));
 
     console.log('Successfully generated blog ideas:', ideasWithIds.length);
+
+    // Save keywords to database
+    const keywordsToInsert = ideasWithIds.map((idea: any) => ({
+      user_id: user.id,
+      keyword: idea.keyword,
+      intent: idea.intent,
+      search_volume: 0, // Default value, can be updated later with real data
+      cpc: 0, // Default value, can be updated later with real data
+      difficulty: null,
+      competition: null,
+      trend: null,
+    }));
+
+    // Delete existing keywords for this user first to avoid duplicates
+    await supabase
+      .from('keywords')
+      .delete()
+      .eq('user_id', user.id);
+
+    // Insert new keywords
+    const { error: insertError } = await supabase
+      .from('keywords')
+      .insert(keywordsToInsert);
+
+    if (insertError) {
+      console.error('Error inserting keywords:', insertError);
+      throw new Error('Failed to save keywords to database');
+    }
+
+    console.log('Successfully saved keywords to database');
 
     return new Response(
       JSON.stringify({ blogIdeas: ideasWithIds }),

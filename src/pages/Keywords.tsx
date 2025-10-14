@@ -77,13 +77,11 @@ export default function Keywords() {
 
       if (error) throw error;
 
-      toast.success("Website scan started! Keywords will appear shortly.");
+      toast.success("Keywords discovered and saved!");
       setWebsiteUrl("");
       
-      // Refresh the keywords list after a short delay
-      setTimeout(() => {
-        fetchKeywords();
-      }, 3000);
+      // Immediate refresh to show keywords
+      fetchKeywords();
     } catch (error) {
       console.error("Error scanning website:", error);
       toast.error("Failed to scan website");
