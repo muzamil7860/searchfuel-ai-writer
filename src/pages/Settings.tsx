@@ -3,16 +3,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
 
 export default function Settings() {
-  const handleLogout = () => {
-    // Implement logout logic
-    console.log("Logout clicked");
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to logout");
+    } else {
+      toast.success("Logged out successfully");
+      navigate("/");
+    }
   };
 
   const handleDeleteAccount = () => {
     // Implement delete account logic
     console.log("Delete account clicked");
+    toast.info("Delete account functionality coming soon");
   };
 
   return (
@@ -93,18 +113,9 @@ export default function Settings() {
               <Input 
                 id="email" 
                 type="email" 
-                defaultValue="user@example.com"
+                value={user?.email || ""}
                 disabled
                 className="bg-muted"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Preferred Name</Label>
-              <Input 
-                id="name" 
-                type="text" 
-                placeholder="Name you like to be called"
               />
             </div>
 
@@ -116,7 +127,7 @@ export default function Settings() {
                   size="sm"
                   onClick={handleLogout}
                 >
-                  Continue
+                  Logout
                 </Button>
               </div>
 
@@ -127,7 +138,7 @@ export default function Settings() {
                   size="sm"
                   onClick={handleDeleteAccount}
                 >
-                  Continue
+                  Delete
                 </Button>
               </div>
             </div>
