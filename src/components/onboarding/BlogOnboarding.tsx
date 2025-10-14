@@ -2,20 +2,30 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
-interface OnboardingData {
-  companyName: string;
-  websiteHomepage: string;
-  websiteCta: string;
-  industry: string;
-  companyDescription: string;
-  targetAudience: string;
-  competitors: Array<{ name: string; website: string }>;
+type CMSPlatform = 
+  | "wordpress" 
+  | "webflow" 
+  | "ghost" 
+  | "shopify" 
+  | "wix" 
+  | "framer"
+  | "notion"
+  | "hubspot"
+  | "nextjs"
+  | "rest_api";
+
+interface CMSConnection {
+  platform: CMSPlatform;
+  siteUrl: string;
+  apiKey?: string;
+  apiSecret?: string;
+  storeId?: string;
+  accessToken?: string;
 }
 
 interface BlogOnboardingProps {
@@ -24,318 +34,304 @@ interface BlogOnboardingProps {
   onCancel: () => void;
 }
 
-const INDUSTRIES = [
-  "SaaS / Software",
-  "E-commerce",
-  "Fintech",
-  "Healthcare",
-  "Education",
-  "Marketplace",
-  "Legal",
-  "Other",
+const CMS_PLATFORMS = [
+  { id: "wordpress" as const, name: "WordPress", icon: "🔷", description: "Connect your WordPress site" },
+  { id: "webflow" as const, name: "Webflow", icon: "⚡", description: "Sync with Webflow CMS" },
+  { id: "ghost" as const, name: "Ghost", icon: "👻", description: "Integrate Ghost publishing" },
+  { id: "shopify" as const, name: "Shopify", icon: "🛍️", description: "Connect your Shopify store" },
+  { id: "wix" as const, name: "WIX", icon: "🌐", description: "Sync with WIX website" },
+  { id: "framer" as const, name: "Framer", icon: "🎨", description: "Connect Framer site" },
+  { id: "notion" as const, name: "Notion", icon: "📝", description: "Sync with Notion database" },
+  { id: "hubspot" as const, name: "HubSpot", icon: "🎯", description: "Connect HubSpot CMS" },
+  { id: "nextjs" as const, name: "Next.js", icon: "⚫", description: "Connect Next.js blog" },
+  { id: "rest_api" as const, name: "REST API", icon: "🔌", description: "Custom REST API" },
 ];
 
 export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingProps) {
-  const [step, setStep] = useState(1);
+  const [selectedPlatform, setSelectedPlatform] = useState<CMSPlatform | null>(null);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<OnboardingData>({
-    companyName: "",
-    websiteHomepage: "",
-    websiteCta: "",
-    industry: "",
-    companyDescription: "",
-    targetAudience: "",
-    competitors: [{ name: "", website: "" }],
+  const [testing, setTesting] = useState(false);
+  const [connectionData, setConnectionData] = useState<CMSConnection>({
+    platform: "wordpress",
+    siteUrl: "",
+    apiKey: "",
+    apiSecret: "",
   });
 
-  const totalSteps = 3;
+  const handleTestConnection = async () => {
+    if (!selectedPlatform || !connectionData.siteUrl) {
+      toast.error("Please enter your site URL");
+      return;
+    }
 
-  const updateField = (field: keyof OnboardingData, value: any) => {
-    setFormData({ ...formData, [field]: value });
-  };
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("test-cms-connection", {
+        body: {
+          platform: selectedPlatform,
+          ...connectionData,
+        },
+      });
 
-  const addCompetitor = () => {
-    updateField("competitors", [...formData.competitors, { name: "", website: "" }]);
-  };
+      if (error) throw error;
 
-  const updateCompetitor = (index: number, field: "name" | "website", value: string) => {
-    const newCompetitors = [...formData.competitors];
-    newCompetitors[index][field] = value;
-    updateField("competitors", newCompetitors);
-  };
-
-  const removeCompetitor = (index: number) => {
-    const newCompetitors = formData.competitors.filter((_, i) => i !== index);
-    updateField("competitors", newCompetitors);
-  };
-
-  const canContinue = () => {
-    switch (step) {
-      case 1:
-        return formData.companyName && formData.websiteHomepage && formData.industry;
-      case 2:
-        return formData.companyDescription.length >= 50 && formData.targetAudience;
-      case 3:
-        return formData.competitors.some(c => c.name);
-      default:
-        return false;
+      if (data.success) {
+        toast.success("Connection successful!");
+      } else {
+        toast.error(data.error || "Failed to connect");
+      }
+    } catch (error: any) {
+      console.error("Connection test error:", error);
+      toast.error("Failed to test connection: " + error.message);
+    } finally {
+      setTesting(false);
     }
   };
 
-  const handleComplete = async () => {
-    if (!canContinue()) return;
+  const handleConnect = async () => {
+    if (!selectedPlatform || !connectionData.siteUrl) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Extract site name from URL for title
+      const siteName = new URL(connectionData.siteUrl).hostname.split('.')[0];
+
       const { error } = await supabase.from("blogs").insert({
         user_id: user.id,
         mode: "existing_site",
         subdomain: null,
-        title: formData.companyName,
-        description: formData.companyDescription,
-        company_name: formData.companyName,
-        website_homepage: formData.websiteHomepage,
-        website_cta: formData.websiteCta || null,
-        industry: formData.industry,
-        company_description: formData.companyDescription,
-        target_audience: formData.targetAudience,
-        competitors: formData.competitors.filter(c => c.name),
+        title: siteName.charAt(0).toUpperCase() + siteName.slice(1),
+        description: `Connected ${selectedPlatform} site`,
+        company_name: siteName,
+        website_homepage: connectionData.siteUrl,
+        website_cta: null,
+        industry: null,
+        company_description: null,
+        target_audience: null,
+        competitors: [],
         theme: null,
         onboarding_completed: true,
         is_published: true,
         logo_url: null,
+        cms_platform: selectedPlatform,
+        cms_site_url: connectionData.siteUrl,
+        cms_credentials: {
+          apiKey: connectionData.apiKey,
+          apiSecret: connectionData.apiSecret,
+          accessToken: connectionData.accessToken,
+          storeId: connectionData.storeId,
+        },
       });
 
       if (error) throw error;
 
-      toast.success("Blog created successfully!");
+      toast.success("CMS connected successfully!");
       onComplete();
     } catch (error: any) {
-      toast.error("Failed to create blog: " + error.message);
+      toast.error("Failed to connect CMS: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {Array.from({ length: totalSteps }, (_, i) => {
-        const stepNum = i + 1;
-        const isActive = stepNum === step;
-        const isCompleted = stepNum < step;
+  const renderConnectionForm = () => {
+    if (!selectedPlatform) return null;
 
-        return (
-          <div key={stepNum} className="flex items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-                ${isCompleted ? "bg-accent text-white" : ""}
-                ${isActive ? "bg-accent text-white ring-2 ring-accent ring-offset-2" : ""}
-                ${!isActive && !isCompleted ? "bg-muted text-muted-foreground" : ""}
-              `}
-            >
-              {isCompleted ? <Check className="w-4 h-4" /> : stepNum}
-            </div>
-            {stepNum < totalSteps && (
-              <div className={`w-12 h-0.5 ${isCompleted ? "bg-accent" : "bg-muted"}`} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+    const platform = CMS_PLATFORMS.find(p => p.id === selectedPlatform);
 
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Tell us about your company</h2>
-        <p className="text-muted-foreground">This helps us understand your business and target audience</p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="companyName">Company Name *</Label>
-          <Input
-            id="companyName"
-            placeholder="Acme Corp"
-            value={formData.companyName}
-            onChange={(e) => updateField("companyName", e.target.value)}
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="websiteHomepage">Website Homepage *</Label>
-          <Input
-            id="websiteHomepage"
-            placeholder="https://acme.com"
-            value={formData.websiteHomepage}
-            onChange={(e) => updateField("websiteHomepage", e.target.value)}
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="websiteCta">Website CTA (Optional)</Label>
-          <Input
-            id="websiteCta"
-            placeholder="https://yourdomain.com/get-demo (optional)"
-            value={formData.websiteCta}
-            onChange={(e) => updateField("websiteCta", e.target.value)}
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="industry">Industry *</Label>
-          <select
-            id="industry"
-            value={formData.industry}
-            onChange={(e) => updateField("industry", e.target.value)}
-            className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedPlatform(null)}
           >
-            <option value="">Select industry...</option>
-            {INDUSTRIES.map((industry) => (
-              <option key={industry} value={industry}>
-                {industry}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Tell us more</h2>
-        <p className="text-muted-foreground">Help us generate relevant content for your audience</p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="companyDescription">Company Description *</Label>
-          <Textarea
-            id="companyDescription"
-            placeholder="We help SaaS companies understand user behavior and optimize their funnels with AI-powered analytics"
-            value={formData.companyDescription}
-            onChange={(e) => updateField("companyDescription", e.target.value)}
-            className="mt-1 min-h-32"
-          />
-          <p className={`text-xs mt-1 ${formData.companyDescription.length < 50 ? "text-red-500" : "text-muted-foreground"}`}>
-            {formData.companyDescription.length}/500 characters (minimum 50)
-          </p>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{platform?.icon}</span>
+            <h2 className="text-2xl font-bold text-foreground">Connect {platform?.name}</h2>
+          </div>
         </div>
 
-        <div>
-          <Label htmlFor="targetAudience">Target Audience *</Label>
-          <Input
-            id="targetAudience"
-            placeholder="Startup founders"
-            value={formData.targetAudience}
-            onChange={(e) => updateField("targetAudience", e.target.value)}
-            className="mt-1"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Who are your competitors?</h2>
-        <p className="text-muted-foreground">We'll discover winnable keywords related to these companies</p>
-      </div>
-
-      <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
-        <p className="text-sm font-medium text-foreground mb-2">Why we ask this:</p>
-        <p className="text-sm text-muted-foreground mb-2">Our AI will generate long-tail keyword variants like:</p>
-        <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-          <li>"[Competitor] alternative for [your niche]"</li>
-          <li>"[Competitor] vs [Your Product] for [use case]"</li>
-          <li>"Best [category] tools like [Competitor]"</li>
-        </ul>
-      </Card>
-
-      <div className="space-y-3">
-        {formData.competitors.map((competitor, index) => (
-          <div key={index} className="space-y-2">
-            <div className="flex gap-2">
-              <Input
-                placeholder={`Competitor ${index + 1}`}
-                value={competitor.name}
-                onChange={(e) => updateCompetitor(index, "name", e.target.value)}
-              />
-              {formData.competitors.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeCompetitor(index)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="siteUrl">Site URL *</Label>
             <Input
-              placeholder="Website (optional)"
-              value={competitor.website}
-              onChange={(e) => updateCompetitor(index, "website", e.target.value)}
+              id="siteUrl"
+              type="url"
+              placeholder="https://yourdomain.com"
+              value={connectionData.siteUrl}
+              onChange={(e) => setConnectionData({ ...connectionData, siteUrl: e.target.value })}
+              className="mt-1"
             />
           </div>
-        ))}
 
-        <Button variant="outline" onClick={addCompetitor} className="w-full">
-          + Add another competitor
-        </Button>
-        <p className="text-xs text-muted-foreground">Add 3-5 competitors for best results</p>
-      </div>
-    </div>
-  );
+          {(selectedPlatform === "wordpress" || selectedPlatform === "ghost" || selectedPlatform === "rest_api") && (
+            <div>
+              <Label htmlFor="apiKey">API Key *</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                placeholder="Enter your API key"
+                value={connectionData.apiKey}
+                onChange={(e) => setConnectionData({ ...connectionData, apiKey: e.target.value })}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedPlatform === "wordpress" && "Generate from WordPress admin → Settings → API"}
+                {selectedPlatform === "ghost" && "Find in Ghost admin → Integrations → Add custom integration"}
+                {selectedPlatform === "rest_api" && "Your custom API authentication key"}
+              </p>
+            </div>
+          )}
 
+          {selectedPlatform === "webflow" && (
+            <div>
+              <Label htmlFor="accessToken">Access Token *</Label>
+              <Input
+                id="accessToken"
+                type="password"
+                placeholder="Enter your Webflow access token"
+                value={connectionData.accessToken}
+                onChange={(e) => setConnectionData({ ...connectionData, accessToken: e.target.value })}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Generate from Webflow → Account Settings → API Access
+              </p>
+            </div>
+          )}
 
-  return (
-    <Card className="p-8 bg-card max-w-full">
-      {renderStepIndicator()}
+          {selectedPlatform === "shopify" && (
+            <>
+              <div>
+                <Label htmlFor="apiKey">API Key *</Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  placeholder="Enter your Shopify API key"
+                  value={connectionData.apiKey}
+                  onChange={(e) => setConnectionData({ ...connectionData, apiKey: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="apiSecret">API Secret *</Label>
+                <Input
+                  id="apiSecret"
+                  type="password"
+                  placeholder="Enter your Shopify API secret"
+                  value={connectionData.apiSecret}
+                  onChange={(e) => setConnectionData({ ...connectionData, apiSecret: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Create a private app in Shopify admin to get API credentials
+              </p>
+            </>
+          )}
 
-      <div className="space-y-6">
-          {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
+          {(selectedPlatform === "notion" || selectedPlatform === "hubspot") && (
+            <div>
+              <Label htmlFor="accessToken">Access Token *</Label>
+              <Input
+                id="accessToken"
+                type="password"
+                placeholder={`Enter your ${platform?.name} access token`}
+                value={connectionData.accessToken}
+                onChange={(e) => setConnectionData({ ...connectionData, accessToken: e.target.value })}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedPlatform === "notion" && "Create an integration at notion.so/my-integrations"}
+                {selectedPlatform === "hubspot" && "Generate from HubSpot → Settings → Integrations → API Key"}
+              </p>
+            </div>
+          )}
 
-          <div className="flex gap-4 mt-6">
-            {step > 1 ? (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
-                Back
-              </Button>
-            ) : (
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            )}
-
-            {step < totalSteps ? (
-              <Button
-                onClick={() => setStep(step + 1)}
-                disabled={!canContinue()}
-                className="flex-1"
-              >
-                Continue
-              </Button>
-            ) : (
-              <Button
-                onClick={handleComplete}
-                disabled={!canContinue() || loading}
-                className="flex-1"
-              >
-                {loading ? "Creating..." : "Complete Setup"}
-              </Button>
-            )}
+          <div className="flex gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleTestConnection}
+              disabled={testing || !connectionData.siteUrl}
+            >
+              {testing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                "Test Connection"
+              )}
+            </Button>
+            <Button
+              onClick={handleConnect}
+              disabled={loading || !connectionData.siteUrl}
+              className="flex-1"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Connect Site"
+              )}
+            </Button>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  if (selectedPlatform) {
+    return (
+      <Card className="p-8 bg-card max-w-2xl">
+        {renderConnectionForm()}
       </Card>
     );
   }
+
+  return (
+    <Card className="p-8 bg-card max-w-4xl">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Connect Your CMS</h2>
+        <p className="text-muted-foreground">
+          Choose your platform to automatically sync and publish SEO-optimized content
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {CMS_PLATFORMS.map((platform) => (
+          <button
+            key={platform.id}
+            onClick={() => {
+              setSelectedPlatform(platform.id);
+              setConnectionData({ ...connectionData, platform: platform.id });
+            }}
+            className="p-4 rounded-lg border-2 border-border hover:border-accent transition-all bg-card hover:bg-accent/5 flex flex-col items-center gap-2 text-center"
+          >
+            <span className="text-3xl">{platform.icon}</span>
+            <span className="text-sm font-medium text-foreground">{platform.name}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-8 flex justify-end">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </Card>
+  );
+}

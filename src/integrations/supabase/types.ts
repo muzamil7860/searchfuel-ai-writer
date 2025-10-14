@@ -147,6 +147,9 @@ export type Database = {
       blogs: {
         Row: {
           auto_post_enabled: boolean | null
+          cms_credentials: Json | null
+          cms_platform: string | null
+          cms_site_url: string | null
           company_description: string | null
           company_name: string | null
           competitors: Json | null
@@ -157,6 +160,7 @@ export type Database = {
           industry: string | null
           is_published: boolean
           last_post_generated_at: string | null
+          last_sync_at: string | null
           logo_url: string | null
           mode: string
           onboarding_completed: boolean | null
@@ -171,6 +175,9 @@ export type Database = {
         }
         Insert: {
           auto_post_enabled?: boolean | null
+          cms_credentials?: Json | null
+          cms_platform?: string | null
+          cms_site_url?: string | null
           company_description?: string | null
           company_name?: string | null
           competitors?: Json | null
@@ -181,6 +188,7 @@ export type Database = {
           industry?: string | null
           is_published?: boolean
           last_post_generated_at?: string | null
+          last_sync_at?: string | null
           logo_url?: string | null
           mode?: string
           onboarding_completed?: boolean | null
@@ -195,6 +203,9 @@ export type Database = {
         }
         Update: {
           auto_post_enabled?: boolean | null
+          cms_credentials?: Json | null
+          cms_platform?: string | null
+          cms_site_url?: string | null
           company_description?: string | null
           company_name?: string | null
           competitors?: Json | null
@@ -205,6 +216,7 @@ export type Database = {
           industry?: string | null
           is_published?: boolean
           last_post_generated_at?: string | null
+          last_sync_at?: string | null
           logo_url?: string | null
           mode?: string
           onboarding_completed?: boolean | null
