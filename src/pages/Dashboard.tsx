@@ -204,18 +204,21 @@ export default function Dashboard() {
     if (!blog) return;
 
     try {
+      // Only clear CMS connection fields, keep the blog and its data
       const { error } = await supabase
         .from("blogs")
-        .delete()
+        .update({
+          cms_platform: null,
+          cms_site_url: null,
+          cms_credentials: null,
+        })
         .eq("id", blog.id);
 
       if (error) throw error;
 
-      setBlog(null);
-      setAnalytics([]);
-      setBlogPosts([]);
+      await fetchUserBlog();
       setShowDisconnectDialog(false);
-      toast.success("Site disconnected successfully");
+      toast.success("Site disconnected successfully - your content remains published");
     } catch (error: any) {
       console.error("Error disconnecting site:", error);
       toast.error("Failed to disconnect site: " + error.message);
@@ -903,8 +906,8 @@ export default function Dashboard() {
                 Disconnect Site?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently disconnect your {blog && getCMSName(blog.cms_platform)} site and remove all associated data. 
-                This action cannot be undone.
+                This will disconnect your {blog && getCMSName(blog.cms_platform)} site from SearchFuel. 
+                Your published content will remain on your CMS - only the connection will be removed.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

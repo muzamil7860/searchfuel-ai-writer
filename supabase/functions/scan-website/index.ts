@@ -5,6 +5,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Extract text content from HTML
+function extractTextFromHTML(html: string): string {
+  // Remove script and style tags
+  let text = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  text = text.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+  
+  // Extract title
+  const titleMatch = text.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const title = titleMatch ? titleMatch[1] : '';
+  
+  // Extract meta description
+  const descMatch = text.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
+  const description = descMatch ? descMatch[1] : '';
+  
+  // Extract headings
+  const h1Matches = text.match(/<h1[^>]*>([^<]+)<\/h1>/gi) || [];
+  const h2Matches = text.match(/<h2[^>]*>([^<]+)<\/h2>/gi) || [];
+  const headings = [...h1Matches, ...h2Matches].map(h => h.replace(/<[^>]+>/g, ''));
+  
+  // Extract paragraph content
+  const pMatches = text.match(/<p[^>]*>([^<]+)<\/p>/gi) || [];
+  const paragraphs = pMatches.slice(0, 10).map(p => p.replace(/<[^>]+>/g, ''));
+  
+  return JSON.stringify({
+    title,
+    description,
+    headings: headings.slice(0, 10),
+    content: paragraphs.slice(0, 5).join(' ').slice(0, 1000)
+  });
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -20,22 +51,47 @@ serve(async (req) => {
 
     console.log('Scanning website:', url);
 
-    const systemPrompt = `You are an expert SEO analyst. Analyze the given website URL and identify 5-10 high-potential blog post ideas that could:
+    // Fetch the actual website content
+    let websiteContent = '';
+    let websiteData: any = {};
+    
+    try {
+      const websiteResponse = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; SearchFuel/1.0; +https://searchfuel.app)'
+        }
+      });
+      
+      if (websiteResponse.ok) {
+        const html = await websiteResponse.text();
+        websiteContent = extractTextFromHTML(html);
+        websiteData = JSON.parse(websiteContent);
+        console.log('Successfully fetched website content:', websiteData.title);
+      }
+    } catch (fetchError) {
+      console.error('Error fetching website:', fetchError);
+      // Continue without website content if fetch fails
+    }
+
+    const systemPrompt = `You are an expert SEO analyst. Analyze the given website information and identify 5-10 high-potential blog post ideas that could:
 1. Help the site rank higher in search engines
 2. Target keywords with high buyer intent
 3. Drive conversions and traffic
 
+Website Information:
+${websiteContent || 'URL: ' + url}
+
 For each blog idea, provide:
-- title: A compelling blog post title
-- keyword: The primary target keyword
+- title: A compelling blog post title that targets a specific keyword
+- keyword: The primary target keyword (2-4 words)
 - intent: Either "informational", "commercial", or "transactional"
-- reason: A short explanation of why this topic is valuable for conversions
+- reason: A short explanation (1-2 sentences) of why this topic is valuable for SEO and conversions
 
 Return ONLY a valid JSON array of blog ideas. No markdown, no explanation, just the JSON array.`;
 
-    const userPrompt = `Analyze this website and suggest 5-10 SEO-optimized blog topics: ${url}
-
-Important: Consider the website's niche, existing content gaps, and keywords that indicate buying intent. Focus on topics that will drive actual business results.`;
+    const userPrompt = websiteData.title 
+      ? `Based on the website "${websiteData.title}" with description "${websiteData.description}", suggest 5-10 SEO-optimized blog topics that complement the existing content: ${websiteData.headings.join(', ')}`
+      : `Analyze this website and suggest 5-10 SEO-optimized blog topics: ${url}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
