@@ -9,6 +9,11 @@ import { User } from "@supabase/supabase-js";
 import { LogOut, Sparkles, TrendingUp, Zap, Target, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import heroBackground from "@/assets/hero-background.jpg";
+import { Features } from "@/components/Features";
+import { HowItWorks } from "@/components/HowItWorks";
+import { SocialProof } from "@/components/SocialProof";
+import { FinalCTA } from "@/components/FinalCTA";
+import { Footer } from "@/components/Footer";
 
 interface BlogIdea {
   id: string;
@@ -319,6 +324,18 @@ const Index = () => {
           </div>
         </div>
       )}
+
+      {/* Additional sections - only show if no results */}
+      {!seoResults && (
+        <>
+          <Features />
+          <HowItWorks />
+          <SocialProof />
+          <FinalCTA />
+        </>
+      )}
+
+      <Footer />
     </div>
   );
 };
