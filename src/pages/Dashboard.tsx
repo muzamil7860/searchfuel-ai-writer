@@ -938,6 +938,50 @@ export default function Dashboard() {
           </Card>
         )}
 
+        {/* Backlink Settings */}
+        {blog && (
+          <Card className="p-6 mb-6 bg-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Backlink Settings</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure your automatic backlink strategy
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/settings?tab=backlinks'}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Backlinks
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Subscription */}
+        {blog && (
+          <Card className="p-6 mb-6 bg-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Subscription</h3>
+                <p className="text-sm text-muted-foreground">
+                  Current plan: <span className="font-medium text-foreground">Free</span>
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/settings?tab=subscription'}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Subscription
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {showPublishDialog && blog && (
           <PublishDialog
             blog={blog}

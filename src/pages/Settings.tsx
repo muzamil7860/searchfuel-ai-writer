@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
@@ -13,8 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [blogId, setBlogId] = useState<string | null>(null);
+  
+  const tabParam = searchParams.get('tab');
+  const defaultTab = (tabParam === 'backlinks' || tabParam === 'subscription') ? tabParam : 'account';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -57,7 +61,7 @@ export default function Settings() {
           <h1 className="text-2xl font-semibold">Settings</h1>
         </div>
 
-        <Tabs defaultValue="account" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="backlinks">Backlinks</TabsTrigger>
