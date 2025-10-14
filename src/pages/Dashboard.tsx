@@ -20,6 +20,8 @@ import {
   ArrowLeft,
   Eye,
   Clock,
+  Unplug,
+  AlertCircle,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { BlogOnboarding } from "@/components/onboarding/BlogOnboarding";
@@ -32,6 +34,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface BlogIdea {
   id: string;
@@ -50,13 +62,16 @@ interface ScanData {
 
 interface Blog {
   id: string;
-  subdomain: string;
+  subdomain: string | null;
   custom_domain: string | null;
   title: string;
   description: string | null;
   is_published: boolean;
   company_name: string | null;
   website_homepage: string | null;
+  cms_platform: string | null;
+  cms_site_url: string | null;
+  mode: string;
 }
 
 interface AnalyticsData {
@@ -77,6 +92,7 @@ export default function Dashboard() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [blogForm, setBlogForm] = useState({
     subdomain: "",
     title: "",
@@ -132,6 +148,59 @@ export default function Dashboard() {
         avg_time: 0,
       });
     }
+  };
+
+  const handleDisconnectSite = async () => {
+    if (!blog) return;
+
+    try {
+      const { error } = await supabase
+        .from("blogs")
+        .delete()
+        .eq("id", blog.id);
+
+      if (error) throw error;
+
+      setBlog(null);
+      setAnalytics(null);
+      setShowDisconnectDialog(false);
+      toast.success("Site disconnected successfully");
+    } catch (error: any) {
+      console.error("Error disconnecting site:", error);
+      toast.error("Failed to disconnect site: " + error.message);
+    }
+  };
+
+  const getCMSIcon = (platform: string | null) => {
+    const icons: { [key: string]: string } = {
+      wordpress: "🔷",
+      webflow: "⚡",
+      ghost: "👻",
+      shopify: "🛍️",
+      wix: "🌐",
+      framer: "🎨",
+      notion: "📝",
+      hubspot: "🎯",
+      nextjs: "⚫",
+      rest_api: "🔌",
+    };
+    return icons[platform || ""] || "🌐";
+  };
+
+  const getCMSName = (platform: string | null) => {
+    const names: { [key: string]: string } = {
+      wordpress: "WordPress",
+      webflow: "Webflow",
+      ghost: "Ghost",
+      shopify: "Shopify",
+      wix: "WIX",
+      framer: "Framer",
+      notion: "Notion",
+      hubspot: "HubSpot",
+      nextjs: "Next.js",
+      rest_api: "REST API",
+    };
+    return names[platform || ""] || "Website";
   };
 
   const handleCreateBlog = async () => {
@@ -460,6 +529,50 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* Connected Site Card */}
+      {blog && (
+        <Card className="p-6 mb-6 bg-card border-accent/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center text-2xl">
+                {getCMSIcon(blog.cms_platform)}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {getCMSName(blog.cms_platform)} Site Connected
+                  </h3>
+                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                    Active
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Globe className="w-4 h-4" />
+                  <a 
+                    href={blog.cms_site_url || blog.website_homepage || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-accent transition-colors flex items-center gap-1"
+                  >
+                    {blog.cms_site_url || blog.website_homepage || "No URL"}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowDisconnectDialog(true)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Unplug className="w-4 h-4 mr-2" />
+              Disconnect
+            </Button>
+          </div>
+        </Card>
+      )}
+
         {/* Analytics / No Site Connected */}
         {!blog ? (
           <Card className="p-12 text-center bg-card">
@@ -676,6 +789,31 @@ export default function Dashboard() {
             onCancel={() => setShowPublishDialog(false)}
           />
         )}
+
+        {/* Disconnect Confirmation Dialog */}
+        <AlertDialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                Disconnect Site?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently disconnect your {blog && getCMSName(blog.cms_platform)} site and remove all associated data. 
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDisconnectSite}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Disconnect Site
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
