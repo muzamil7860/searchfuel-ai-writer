@@ -1,133 +1,138 @@
-import { useState } from "react";
-import { Hero } from "@/components/Hero";
-import { ScanResults } from "@/components/ScanResults";
-import { ArticleViewer } from "@/components/ArticleViewer";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-
-interface BlogIdea {
-  id: string;
-  title: string;
-  keyword: string;
-  intent: "informational" | "commercial" | "transactional";
-  reason: string;
-}
-
-interface InternalLink {
-  anchorText: string;
-  targetUrl: string;
-}
-
-interface ExternalLink {
-  anchorText: string;
-  targetUrl: string;
-  reason: string;
-}
-
-interface GeneratedArticle {
-  title: string;
-  metaDescription: string;
-  content: string;
-  keyword: string;
-  internalLinks: InternalLink[];
-  externalLinks: ExternalLink[];
-  socialCaption: string;
-}
-
-type AppState = "hero" | "results" | "article";
+import { User } from "@supabase/supabase-js";
+import { LogOut } from "lucide-react";
 
 const Index = () => {
-  const [state, setState] = useState<AppState>("hero");
-  const [currentUrl, setCurrentUrl] = useState("");
-  const [blogIdeas, setBlogIdeas] = useState<BlogIdea[]>([]);
-  const [generatedArticle, setGeneratedArticle] = useState<GeneratedArticle | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
 
-  const handleScanStart = async (url: string) => {
-    setIsLoading(true);
-    setCurrentUrl(url);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('scan-website', {
-        body: { url }
-      });
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
 
-      if (error) {
-        console.error('Error scanning website:', error);
-        toast.error('Failed to scan website. Please try again.');
-        return;
-      }
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-      if (data?.blogIdeas && data.blogIdeas.length > 0) {
-        setBlogIdeas(data.blogIdeas);
-        setState("results");
-        toast.success(`Found ${data.blogIdeas.length} blog opportunities!`);
-      } else {
-        toast.error('No blog ideas found. Please try a different URL.');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return () => subscription.unsubscribe();
+  }, []);
 
-  const handleApprove = async (idea: BlogIdea) => {
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-article', {
-        body: {
-          title: idea.title,
-          keyword: idea.keyword,
-          intent: idea.intent,
-          websiteUrl: currentUrl
-        }
-      });
-
-      if (error) {
-        console.error('Error generating article:', error);
-        toast.error('Failed to generate article. Please try again.');
-        return;
-      }
-
-      if (data?.article) {
-        setGeneratedArticle(data.article);
-        setState("article");
-        toast.success('Article generated successfully!');
-      } else {
-        toast.error('No article generated. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    setState("results");
-    setGeneratedArticle(null);
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
   };
 
   return (
-    <div className="min-h-screen">
-      {state === "hero" && <Hero onScanStart={handleScanStart} />}
-      
-      {state === "results" && (
-        <ScanResults
-          url={currentUrl}
-          blogIdeas={blogIdeas}
-          onApprove={handleApprove}
-          isLoading={isLoading}
-        />
-      )}
-      
-      {state === "article" && generatedArticle && (
-        <ArticleViewer article={generatedArticle} onBack={handleBack} />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+      {/* Header with Auth Menu */}
+      <header className="border-b border-border/40 bg-card/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <span className="text-white font-bold text-sm">SF</span>
+            </div>
+            <h1 className="text-xl font-bold text-foreground">SearchFuel</h1>
+          </div>
+          
+          <nav className="flex items-center gap-3">
+            {user ? (
+              <>
+                <Button onClick={() => navigate("/dashboard")}>
+                  Dashboard
+                </Button>
+                <Button variant="outline" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => navigate("/auth?mode=signin")}>
+                  Sign In
+                </Button>
+                <Button onClick={() => navigate("/auth?mode=signup")}>
+                  Sign Up
+                </Button>
+              </>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="container mx-auto px-4 py-20">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+            AI-Powered SEO Content
+            <br />
+            <span className="bg-gradient-to-r from-accent via-accent/80 to-accent/60 bg-clip-text text-transparent">
+              That Ranks & Converts
+            </span>
+          </h2>
+          
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Connect your CMS and let AI automatically generate and publish SEO-optimized articles that drive traffic and conversions.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            {user ? (
+              <Button size="lg" onClick={() => navigate("/dashboard")} className="text-lg px-8">
+                Go to Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button size="lg" onClick={() => navigate("/auth?mode=signup")} className="text-lg px-8">
+                  Get Started Free
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin")} className="text-lg px-8">
+                  Sign In
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Features Grid */}
+          <div className="grid md:grid-cols-3 gap-8 mt-20">
+            <div className="p-6 rounded-lg border border-border/40 bg-card/50 backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🔌</span>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">CMS Integration</h3>
+              <p className="text-sm text-muted-foreground">
+                Seamlessly connect with WordPress, Webflow, Ghost, Shopify, and more
+              </p>
+            </div>
+
+            <div className="p-6 rounded-lg border border-border/40 bg-card/50 backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">✨</span>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">AI Content Generation</h3>
+              <p className="text-sm text-muted-foreground">
+                Generate high-quality, SEO-optimized articles automatically
+              </p>
+            </div>
+
+            <div className="p-6 rounded-lg border border-border/40 bg-card/50 backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📊</span>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Performance Tracking</h3>
+              <p className="text-sm text-muted-foreground">
+                Monitor views, engagement, and content performance
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

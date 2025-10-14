@@ -16,6 +16,15 @@ export default function Auth() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check URL params for mode
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get("mode");
+    if (mode === "signup") {
+      setIsLogin(false);
+    } else if (mode === "signin") {
+      setIsLogin(true);
+    }
+
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {

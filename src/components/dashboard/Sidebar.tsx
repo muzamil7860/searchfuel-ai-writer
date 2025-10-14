@@ -5,8 +5,6 @@ import {
   Settings,
   Home,
   TrendingUp,
-  Search,
-  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +12,7 @@ const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Articles", href: "/articles", icon: FileText },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Keywords", href: "/keywords", icon: TrendingUp },
-  { name: "Search", href: "/search", icon: Search },
 ];
 
 export function Sidebar() {
