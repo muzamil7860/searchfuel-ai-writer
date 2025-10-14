@@ -10,6 +10,7 @@ import Analytics from "./pages/Analytics";
 import Keywords from "./pages/Keywords";
 import SearchPage from "./pages/SearchPage";
 import ArticleDetail from "./pages/ArticleDetail";
+import Settings from "./pages/Settings";
 import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/keywords" element={<Keywords />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
