@@ -280,28 +280,41 @@ export default function Dashboard() {
     }
   };
 
+  if (showOnboarding) {
+    return (
+      <div className="p-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <p className="text-sm text-muted-foreground mb-2">SEARCHFUEL SETUP</p>
+            <h1 className="text-4xl font-bold text-foreground">Create your AI SEO engine</h1>
+          </div>
+          <BlogOnboarding
+            open={true}
+            onComplete={() => {
+              setShowOnboarding(false);
+              fetchUserBlog();
+            }}
+            onCancel={() => setShowOnboarding(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
-      <BlogOnboarding
-        open={showOnboarding}
-        onComplete={() => {
-          setShowOnboarding(false);
-          fetchUserBlog();
-        }}
-        onCancel={() => setShowOnboarding(false)}
-      />
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">
-            Content Research
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Scan websites and generate SEO-optimized content
-          </p>
-        </div>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground">
+          Content Research
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Scan websites and generate SEO-optimized content
+        </p>
+      </div>
 
-        {/* Blog Management Card */}
-        <Card className="p-6 mb-6 bg-card">
+      {/* Blog Management Card */}
+      <Card className="p-6 mb-6 bg-card">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">

@@ -4,8 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
@@ -205,18 +203,19 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
 
         <div>
           <Label htmlFor="industry">Industry *</Label>
-          <Select value={formData.industry} onValueChange={(value) => updateField("industry", value)}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Select industry..." />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {INDUSTRIES.map((industry) => (
-                <SelectItem key={industry} value={industry}>
-                  {industry}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            id="industry"
+            value={formData.industry}
+            onChange={(e) => updateField("industry", e.target.value)}
+            className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">Select industry...</option>
+            {INDUSTRIES.map((industry) => (
+              <option key={industry} value={industry}>
+                {industry}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </div>
@@ -386,18 +385,10 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="text-center mb-4">
-            <p className="text-sm text-muted-foreground mb-2">SEARCHFUEL SETUP</p>
-            <DialogTitle className="text-3xl font-bold">Create your AI SEO engine</DialogTitle>
-          </div>
-        </DialogHeader>
+    <Card className="p-8 bg-card max-w-full">
+      {renderStepIndicator()}
 
-        {renderStepIndicator()}
-
-        <div className="space-y-6">
+      <div className="space-y-6">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
@@ -434,7 +425,6 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+      </Card>
+    );
+  }
