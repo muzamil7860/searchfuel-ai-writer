@@ -18,6 +18,8 @@ import {
   ExternalLink,
   Settings,
   ArrowLeft,
+  Eye,
+  Clock,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { BlogOnboarding } from "@/components/onboarding/BlogOnboarding";
@@ -53,6 +55,14 @@ interface Blog {
   title: string;
   description: string | null;
   is_published: boolean;
+  company_name: string | null;
+  website_homepage: string | null;
+}
+
+interface AnalyticsData {
+  total_views: number;
+  total_visitors: number;
+  avg_time: number;
 }
 
 export default function Dashboard() {
@@ -63,6 +73,7 @@ export default function Dashboard() {
   
   // Blog management state
   const [blog, setBlog] = useState<Blog | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -89,6 +100,37 @@ export default function Dashboard() {
 
     if (data) {
       setBlog(data);
+      fetchAnalytics(data.id);
+    }
+  };
+
+  const fetchAnalytics = async (blogId: string) => {
+    const { data, error } = await supabase
+      .from("blog_analytics")
+      .select("page_views, unique_visitors, avg_time_on_page")
+      .eq("blog_id", blogId);
+
+    if (error) {
+      console.error("Error fetching analytics:", error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const totalViews = data.reduce((sum, row) => sum + (row.page_views || 0), 0);
+      const totalVisitors = data.reduce((sum, row) => sum + (row.unique_visitors || 0), 0);
+      const avgTime = data.reduce((sum, row) => sum + (row.avg_time_on_page || 0), 0) / data.length;
+
+      setAnalytics({
+        total_views: totalViews,
+        total_visitors: totalVisitors,
+        avg_time: Math.round(avgTime),
+      });
+    } else {
+      setAnalytics({
+        total_views: 0,
+        total_visitors: 0,
+        avg_time: 0,
+      });
     }
   };
 
@@ -411,10 +453,10 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">
-          Content Research
+          Dashboard
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Scan websites and generate SEO-optimized content
+          Monitor your content performance
         </p>
       </div>
 
@@ -509,37 +551,69 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* URL Scanner */}
-        <Card className="p-4 mb-6 bg-card">
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="url"
-                placeholder="Enter website URL to scan..."
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleScan()}
-                className="pl-10 h-10"
-              />
+        {/* Analytics / No Site Connected */}
+        {!blog ? (
+          <Card className="p-12 text-center bg-card">
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                <Globe className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                No Site Connected
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Connect your website to start generating SEO-optimized content and tracking performance.
+              </p>
+              <Button onClick={() => setShowOnboarding(true)}>
+                Connect Site
+              </Button>
             </div>
-            <Button
-              onClick={handleScan}
-              disabled={isScanning}
-              variant="hero"
-              className="h-10"
-            >
-              {isScanning ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Scanning...
-                </>
-              ) : (
-                "Scan Website"
-              )}
-            </Button>
+          </Card>
+        ) : analytics ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card className="p-6 bg-card">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-accent" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {analytics.total_views.toLocaleString()}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Total Page Views
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-card">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-accent" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {analytics.total_visitors.toLocaleString()}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Unique Visitors
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-card">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-accent" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-foreground mb-1">
+                {analytics.avg_time}s
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Avg. Time on Page
+              </div>
+            </Card>
           </div>
-        </Card>
+        ) : null}
 
         {/* Stats Overview */}
         {scanData && (
@@ -680,24 +754,6 @@ export default function Dashboard() {
                 ))}
               </TableBody>
             </Table>
-          </Card>
-        )}
-
-        {/* Empty State */}
-        {!scanData && (
-          <Card className="p-12 text-center">
-            <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                No Data Yet
-              </h3>
-              <p className="text-muted-foreground">
-                Enter a website URL above to scan for SEO opportunities and
-                generate article ideas.
-              </p>
-            </div>
           </Card>
         )}
 
