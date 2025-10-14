@@ -64,12 +64,18 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
       return;
     }
 
+    // Add https:// if no protocol is specified
+    const formattedUrl = connectionData.siteUrl.trim().match(/^https?:\/\//) 
+      ? connectionData.siteUrl.trim() 
+      : `https://${connectionData.siteUrl.trim()}`;
+
     setTesting(true);
     try {
       const { data, error } = await supabase.functions.invoke("test-cms-connection", {
         body: {
           platform: selectedPlatform,
           ...connectionData,
+          siteUrl: formattedUrl,
         },
       });
 
@@ -77,6 +83,8 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
 
       if (data.success) {
         toast.success("Connection successful!");
+        // Update the URL with the formatted version
+        setConnectionData({ ...connectionData, siteUrl: formattedUrl });
       } else {
         toast.error(data.error || "Failed to connect");
       }
@@ -94,13 +102,18 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
       return;
     }
 
+    // Add https:// if no protocol is specified
+    const formattedUrl = connectionData.siteUrl.trim().match(/^https?:\/\//) 
+      ? connectionData.siteUrl.trim() 
+      : `https://${connectionData.siteUrl.trim()}`;
+
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       // Extract site name from URL for title
-      const siteName = new URL(connectionData.siteUrl).hostname.split('.')[0];
+      const siteName = new URL(formattedUrl).hostname.split('.')[0];
 
       const { error } = await supabase.from("blogs").insert({
         user_id: user.id,
@@ -109,7 +122,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
         title: siteName.charAt(0).toUpperCase() + siteName.slice(1),
         description: `Connected ${selectedPlatform} site`,
         company_name: siteName,
-        website_homepage: connectionData.siteUrl,
+        website_homepage: formattedUrl,
         website_cta: null,
         industry: null,
         company_description: null,
@@ -120,7 +133,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
         is_published: true,
         logo_url: null,
         cms_platform: selectedPlatform,
-        cms_site_url: connectionData.siteUrl,
+        cms_site_url: formattedUrl,
         cms_credentials: {
           apiKey: connectionData.apiKey,
           apiSecret: connectionData.apiSecret,
@@ -167,12 +180,15 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
             <Label htmlFor="siteUrl">Site URL *</Label>
             <Input
               id="siteUrl"
-              type="url"
-              placeholder="https://yourdomain.com"
+              type="text"
+              placeholder="yourdomain.com or https://yourdomain.com"
               value={connectionData.siteUrl}
               onChange={(e) => setConnectionData({ ...connectionData, siteUrl: e.target.value })}
               className="mt-1"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter your site URL (https:// will be added automatically if needed)
+            </p>
           </div>
 
           {(selectedPlatform === "wordpress" || selectedPlatform === "ghost" || selectedPlatform === "rest_api") && (
@@ -258,6 +274,17 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
               </p>
             </div>
           )}
+
+          {/* Connection Steps Info */}
+          <div className="bg-accent/5 border border-accent/20 rounded-lg p-4 mb-4">
+            <h4 className="text-sm font-semibold text-foreground mb-2">Connection Steps:</h4>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Enter your site URL (e.g., yourdomain.com)</li>
+              <li>Provide required credentials (API keys/tokens)</li>
+              <li>Test the connection to verify credentials</li>
+              <li>Click "Connect Site" to complete the setup</li>
+            </ol>
+          </div>
 
           <div className="flex gap-2 pt-4">
             <Button
