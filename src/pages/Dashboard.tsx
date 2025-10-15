@@ -866,47 +866,6 @@ export default function Dashboard() {
         </Card>
       ) : null}
 
-      {/* Article Types Card */}
-      {blog && (
-        <Card className="p-6 mb-6 bg-card shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Article Types</h3>
-              <p className="text-sm text-muted-foreground">
-                Manage the types of content your AI generates
-              </p>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/settings?tab=article-types')}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Manage Types
-            </Button>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {blog.article_types && Object.entries(blog.article_types)
-              .filter(([_, enabled]) => enabled)
-              .slice(0, 6)
-              .map(([type, _]) => (
-                <Badge key={type} variant="secondary">
-                  {ARTICLE_TYPE_LABELS[type]?.emoji} {ARTICLE_TYPE_LABELS[type]?.name || type}
-                </Badge>
-              ))}
-            {blog.article_types && Object.entries(blog.article_types).filter(([_, enabled]) => enabled).length > 6 && (
-              <Badge variant="outline">
-                +{Object.entries(blog.article_types).filter(([_, enabled]) => enabled).length - 6} more
-              </Badge>
-            )}
-            {(!blog.article_types || Object.keys(blog.article_types).length === 0) && (
-              <p className="text-sm text-muted-foreground">No article types configured yet</p>
-            )}
-          </div>
-        </Card>
-      )}
-
       {/* Article Queue Section - Shows pending articles for approval */}
       {blog && blogPosts.filter(p => p.publishing_status === 'pending').length > 0 && (
         <Card className="p-6 bg-card shadow-sm mb-6">
@@ -976,6 +935,47 @@ export default function Dashboard() {
               </Button>
             </div>
           )}
+        </Card>
+      )}
+
+      {/* Article Types Card */}
+      {blog && (
+        <Card className="p-6 mb-6 bg-card shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Article Types</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage the types of content your AI generates
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/settings?tab=article-types')}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Types
+            </Button>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {blog.article_types && Object.entries(blog.article_types)
+              .filter(([_, enabled]) => enabled)
+              .slice(0, 6)
+              .map(([type, _]) => (
+                <Badge key={type} variant="secondary">
+                  {ARTICLE_TYPE_LABELS[type]?.emoji} {ARTICLE_TYPE_LABELS[type]?.name || type}
+                </Badge>
+              ))}
+            {blog.article_types && Object.entries(blog.article_types).filter(([_, enabled]) => enabled).length > 6 && (
+              <Badge variant="outline">
+                +{Object.entries(blog.article_types).filter(([_, enabled]) => enabled).length - 6} more
+              </Badge>
+            )}
+            {(!blog.article_types || Object.keys(blog.article_types).length === 0) && (
+              <p className="text-sm text-muted-foreground">No article types configured yet</p>
+            )}
+          </div>
         </Card>
       )}
 
