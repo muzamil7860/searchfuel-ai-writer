@@ -253,7 +253,8 @@ General Requirements:
 - Use natural keyword integration
 - Include actionable insights and examples
 - Make it valuable for the target audience
-- Use markdown formatting for structure${backlinkContext}
+- Use markdown formatting for structure
+- IMPORTANT: Do NOT include the title as an H1 heading in the content - start directly with the introduction or first H2 section${backlinkContext}
 
 Focus on topics related to their industry that would help their target audience. Follow the article type format strictly.`;
 

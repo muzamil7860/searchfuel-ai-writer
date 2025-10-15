@@ -17,6 +17,11 @@ interface BlogPost {
   article_type: string | null;
 }
 
+// Remove the first H1 from content to avoid duplication
+const removeFirstH1 = (content: string) => {
+  return content.replace(/^#\s+.+$/m, '').trim();
+};
+
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
@@ -121,7 +126,7 @@ const BlogPost = () => {
             prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded
           ">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {post.content}
+              {removeFirstH1(post.content)}
             </ReactMarkdown>
           </div>
 
