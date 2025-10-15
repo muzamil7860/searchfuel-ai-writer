@@ -88,19 +88,38 @@ serve(async (req) => {
       // Continue without website content if fetch fails
     }
 
-    const systemPrompt = `You are an expert SEO analyst. Analyze the given website information and identify 5-10 high-potential blog post ideas that could:
-1. Help the site rank higher in search engines
-2. Target keywords with high buyer intent
-3. Drive conversions and traffic
+    const systemPrompt = `You are an expert SEO analyst specializing in location-aware keyword research.
+
+STEP 1: Analyze the website and identify:
+- Business location (city, state, region, country)
+- Service area (local business, regional, national, or international)
+- Geographic signals in the content, contact info, or address
+- Industry and business type
+
+STEP 2: Generate 5-10 blog post ideas that:
+1. Match the business's ACTUAL geographic scope
+2. Target keywords relevant to their SERVICE AREA ONLY
+3. Help the site rank higher in search engines for their target location
+4. Drive conversions and qualified traffic
+
+CRITICAL LOCATION RULES:
+- For LOCAL businesses (serve one city/region): Generate ONLY location-specific keywords for their area
+- For REGIONAL businesses: Target ONLY the states/regions they actually serve
+- For NATIONAL businesses: Use broader keywords without conflicting geographic terms
+- For INTERNATIONAL businesses: Consider global keywords or multi-country strategies
+
+DO NOT generate keywords for locations the business doesn't serve.
+DO NOT suggest NYC keywords for a Missouri business.
+DO NOT suggest California keywords for an East Coast business.
 
 Website Information:
 ${websiteContent || 'URL: ' + url}
 
 For each blog idea, provide:
 - title: A compelling blog post title that targets a specific keyword
-- keyword: The primary target keyword (2-4 words)
+- keyword: The primary target keyword (2-4 words) appropriate for their service area
 - intent: Either "informational", "commercial", or "transactional"
-- reason: A short explanation (1-2 sentences) of why this topic is valuable for SEO and conversions
+- reason: A short explanation (1-2 sentences) of why this topic is valuable for SEO and conversions in their target market
 
 Return ONLY a valid JSON array of blog ideas. No markdown, no explanation, just the JSON array.`;
 
@@ -295,7 +314,14 @@ Return ONLY a valid JSON array of blog ideas. No markdown, no explanation, just 
         }
       } else {
         const errorText = await dataforSEOResponse.text();
-        console.error('DataForSEO API request failed:', dataforSEOResponse.status, errorText);
+        const statusCode = dataforSEOResponse.status;
+        
+        if (statusCode === 402) {
+          console.error('DataForSEO API - Payment Required (402). Keyword metrics will show default values.');
+          console.log('Keywords saved without metrics. DataForSEO account needs funding for full data.');
+        } else {
+          console.error('DataForSEO API request failed:', statusCode, errorText);
+        }
       }
     } catch (dataforSEOError) {
       // Log error but don't fail the entire request

@@ -1,9 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, Minus, Search, Loader2, Trash2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, Loader2, Trash2, RotateCcw, Plus, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,6 +27,8 @@ export default function Keywords() {
   const [isFetching, setIsFetching] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [manualKeywords, setManualKeywords] = useState("");
 
   // Fetch keywords from database
   const fetchKeywords = async () => {
@@ -108,6 +113,76 @@ export default function Keywords() {
     }
   };
 
+  // Start over - delete all keywords
+  const handleStartOver = async () => {
+    if (!confirm("This will delete all keywords and start fresh. Continue?")) {
+      return;
+    }
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("keywords")
+        .delete()
+        .eq("user_id", user.id);
+        
+      if (error) throw error;
+      
+      toast.success("All keywords cleared");
+      fetchKeywords();
+    } catch (error) {
+      console.error("Error clearing keywords:", error);
+      toast.error("Failed to clear keywords");
+    }
+  };
+
+  // Add manual keywords
+  const handleAddManualKeywords = async () => {
+    const keywordsToAdd = manualKeywords
+      .split('\n')
+      .map(k => k.trim())
+      .filter(k => k.length > 0);
+      
+    if (keywordsToAdd.length === 0) {
+      toast.error("Please enter at least one keyword");
+      return;
+    }
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      
+      const keywordsData = keywordsToAdd.map(keyword => ({
+        user_id: user.id,
+        keyword,
+        search_volume: 0,
+        cpc: 0,
+        difficulty: null,
+        competition: null,
+        intent: 'informational',
+        trend: 'stable',
+        location_code: 2840,
+        language_code: 'en'
+      }));
+      
+      const { error } = await supabase
+        .from('keywords')
+        .insert(keywordsData);
+        
+      if (error) throw error;
+      
+      toast.success(`Added ${keywordsToAdd.length} keyword${keywordsToAdd.length > 1 ? 's' : ''}`);
+      setShowAddDialog(false);
+      setManualKeywords('');
+      fetchKeywords();
+    } catch (error) {
+      console.error("Error adding keywords:", error);
+      toast.error("Failed to add keywords");
+    }
+  };
+
   // Load keywords on mount
   useEffect(() => {
     fetchKeywords();
@@ -164,11 +239,33 @@ export default function Keywords() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Keywords</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Keywords discovered from your website analysis
-        </p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Keywords</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Keywords discovered from your website analysis
+          </p>
+        </div>
+        {keywords.length > 0 && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowAddDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Keywords
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleStartOver}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Start Over
+            </Button>
+          </div>
+        )}
       </div>
 
       {isFetching ? (
@@ -222,6 +319,17 @@ export default function Keywords() {
         </Card>
       ) : (
         <>
+          {/* DataForSEO Status Banner */}
+          {keywords.some(k => k.searchVolume === 0 && k.difficulty === 0) && (
+            <Alert className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Limited Keyword Data</AlertTitle>
+              <AlertDescription>
+                Search volume, CPC, and competition metrics are unavailable because the DataForSEO API requires payment. Keywords have been saved with default values.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 bg-card">
@@ -359,6 +467,33 @@ export default function Keywords() {
           </Card>
         </>
       )}
+
+      {/* Add Keywords Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Keywords Manually</DialogTitle>
+            <DialogDescription>
+              Enter keywords you want to track (one per line)
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="keyword 1&#10;keyword 2&#10;keyword 3"
+            value={manualKeywords}
+            onChange={(e) => setManualKeywords(e.target.value)}
+            rows={6}
+            className="resize-none"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddManualKeywords}>
+              Add Keywords
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
