@@ -41,7 +41,7 @@ export const Hero = ({ onScanStart }: HeroProps) => {
           </div>
 
           {/* Heading */}
-          <h1 className="text-6xl md:text-8xl font-black text-primary-foreground mb-8 animate-fade-in leading-[0.95] tracking-tight">
+          <h1 className="text-6xl md:text-8xl font-black text-white mb-8 animate-fade-in leading-[0.95] tracking-tight">
             Enhance your
             <br />
             <span className="bg-gradient-to-r from-accent via-accent/90 to-accent/80 bg-clip-text text-transparent">
@@ -50,7 +50,7 @@ export const Hero = ({ onScanStart }: HeroProps) => {
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl md:text-2xl text-primary-foreground/70 mb-12 max-w-3xl mx-auto animate-fade-in font-medium leading-relaxed">
+          <p className="text-xl md:text-2xl text-white/70 mb-12 max-w-3xl mx-auto animate-fade-in font-medium leading-relaxed">
             Effortlessly boost your website's presence with AI — blending intelligent technology and easy-to-use SEO solutions.
           </p>
 
@@ -77,19 +77,19 @@ export const Hero = ({ onScanStart }: HeroProps) => {
 
           {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fade-in">
-            <div className="flex flex-col items-center gap-3 text-primary-foreground/80 group">
+            <div className="flex flex-col items-center gap-3 text-white/80 group">
               <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center group-hover:bg-accent/25 transition-colors">
                 <TrendingUp className="w-6 h-6 text-accent" />
               </div>
               <span className="font-semibold text-base">Instant Analysis</span>
             </div>
-            <div className="flex flex-col items-center gap-3 text-primary-foreground/80 group">
+            <div className="flex flex-col items-center gap-3 text-white/80 group">
               <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center group-hover:bg-accent/25 transition-colors">
                 <Sparkles className="w-6 h-6 text-accent" />
               </div>
               <span className="font-semibold text-base">AI-Generated Content</span>
             </div>
-            <div className="flex flex-col items-center gap-3 text-primary-foreground/80 group">
+            <div className="flex flex-col items-center gap-3 text-white/80 group">
               <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center group-hover:bg-accent/25 transition-colors">
                 <Zap className="w-6 h-6 text-accent" />
               </div>

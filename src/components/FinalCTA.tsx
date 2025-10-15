@@ -13,12 +13,12 @@ export const FinalCTA = () => {
       
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6 leading-tight">
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
             Ready to dominate
             <br />
             search results?
           </h2>
-          <p className="text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
+          <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
             Get your free SEO analysis and start ranking higher in search engines today
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
