@@ -148,10 +148,13 @@ export default function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Get the latest blog for this user (in case of duplicates)
     const { data } = await supabase
       .from("blogs")
       .select("*")
       .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (data) {

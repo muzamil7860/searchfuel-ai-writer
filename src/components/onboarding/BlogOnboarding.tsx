@@ -115,26 +115,25 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Check if blog already exists for this user
+      const { data: existingBlog } = await supabase
+        .from("blogs")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       // Extract site name from URL for title
       const siteName = new URL(formattedUrl).hostname.split('.')[0];
 
-      const { data, error } = await supabase.from("blogs").insert({
-        user_id: user.id,
+      const blogData = {
         mode: "existing_site",
         subdomain: null,
         title: siteName.charAt(0).toUpperCase() + siteName.slice(1),
         description: `Connected ${selectedPlatform} site`,
         company_name: siteName,
         website_homepage: formattedUrl,
-        website_cta: null,
-        industry: null,
-        company_description: null,
-        target_audience: null,
-        competitors: [],
-        theme: null,
         onboarding_completed: true,
         is_published: true,
-        logo_url: null,
         cms_platform: selectedPlatform,
         cms_site_url: formattedUrl,
         cms_credentials: {
@@ -143,12 +142,38 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
           accessToken: connectionData.accessToken,
           storeId: connectionData.storeId,
         },
-      }).select().single();
+      };
 
-      if (error) throw error;
+      let resultData;
+
+      if (existingBlog) {
+        // Update existing blog with CMS connection
+        const { data, error } = await supabase
+          .from("blogs")
+          .update(blogData)
+          .eq("id", existingBlog.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        resultData = data;
+      } else {
+        // Create new blog
+        const { data, error } = await supabase
+          .from("blogs")
+          .insert({
+            user_id: user.id,
+            ...blogData,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        resultData = data;
+      }
 
       toast.success("CMS connected successfully!");
-      setBlogId(data.id);
+      setBlogId(resultData.id);
       setCurrentStep('article-types');
     } catch (error: any) {
       toast.error("Failed to connect CMS: " + error.message);
