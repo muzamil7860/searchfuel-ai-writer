@@ -343,7 +343,46 @@ Focus on topics related to their industry that would help their target audience.
 
         console.log(`Inserted ${linksInserted} backlinks into post: ${insertedLinks.map(l => l.keyword).join(", ")}`);
 
-        // Insert blog post with article type
+        // Generate featured image using Lovable AI
+        let featuredImage = null;
+        try {
+          console.log(`Generating featured image for: ${postData.title}`);
+          
+          const imagePrompt = `Professional blog header image for: ${postData.title}. 
+Theme: ${blog.industry || 'business'}, modern, clean design, wide header image, 16:9 aspect ratio.
+Style: professional, minimalist, high-quality.`;
+
+          const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash-image-preview",
+              messages: [
+                {
+                  role: "user",
+                  content: imagePrompt
+                }
+              ],
+              modalities: ["image", "text"]
+            }),
+          });
+
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json();
+            featuredImage = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+            console.log(`Successfully generated featured image for: ${postData.title}`);
+          } else {
+            console.error(`Image generation failed with status: ${imageResponse.status}`);
+          }
+        } catch (imageError) {
+          console.error(`Error generating image for post "${postData.title}":`, imageError);
+          // Continue without image - don't block article publishing
+        }
+
+        // Insert blog post with article type and featured image
         const { data: post, error: insertError } = await supabase
           .from("blog_posts")
           .insert({
@@ -353,6 +392,7 @@ Focus on topics related to their industry that would help their target audience.
             excerpt: postData.excerpt,
             content: processedContent,
             article_type: selectedArticleType.type,
+            featured_image: featuredImage,
             status: "published",
             published_at: new Date().toISOString(),
           })
