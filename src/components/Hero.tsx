@@ -23,13 +23,13 @@ export const Hero = ({ onScanStart }: HeroProps) => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#1a2332]">
       {/* Background with gradient overlay */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-10"
         style={{ backgroundImage: `url(${heroBackground})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/90" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1a2332] via-[#1e2838] to-[#151d29]" />
       
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 py-24">
