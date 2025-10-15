@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import {
   Search,
   TrendingUp,
@@ -73,6 +75,7 @@ interface Blog {
   cms_platform: string | null;
   cms_site_url: string | null;
   mode: string;
+  article_types: Record<string, boolean> | null;
 }
 
 interface AnalyticsData {
@@ -83,10 +86,12 @@ interface AnalyticsData {
 interface BlogPost {
   id: string;
   title: string;
+  slug: string;
   published_at: string;
   views: number;
   publishing_status: string | null;
   external_post_id: string | null;
+  article_type: string | null;
 }
 
 interface KeywordRanking {
@@ -99,7 +104,20 @@ interface KeywordRanking {
 
 type DateRange = "7D" | "1M" | "3M" | "6M" | "1Y" | "All";
 
+const ARTICLE_TYPE_LABELS: Record<string, { name: string; emoji: string }> = {
+  how_to: { name: "How-To Guides", emoji: "📚" },
+  listicle: { name: "Listicles", emoji: "📝" },
+  qa: { name: "Q&A Articles", emoji: "❓" },
+  news: { name: "News & Updates", emoji: "📰" },
+  roundup: { name: "Product Roundups", emoji: "🔍" },
+  versus: { name: "Comparison Articles", emoji: "⚖️" },
+  checklist: { name: "Checklists", emoji: "✅" },
+  advertorial: { name: "Advertorials", emoji: "📢" },
+  interactive_tool: { name: "Interactive Tools", emoji: "🛠️" },
+};
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [scanData, setScanData] = useState<ScanData | null>(null);
@@ -158,7 +176,7 @@ export default function Dashboard() {
       .maybeSingle();
 
     if (data) {
-      setBlog(data);
+      setBlog(data as Blog);
       fetchAnalytics(data.id);
       fetchBlogPosts(data.id);
       fetchKeywordRankings();
@@ -208,7 +226,7 @@ export default function Dashboard() {
   const fetchBlogPosts = async (blogId: string) => {
     const { data: posts, error: postsError } = await supabase
       .from("blog_posts")
-      .select("id, title, published_at, publishing_status, external_post_id")
+      .select("id, title, slug, published_at, publishing_status, external_post_id, article_type")
       .eq("blog_id", blogId)
       .eq("status", "published")
       .order("published_at", { ascending: false });
@@ -353,7 +371,7 @@ export default function Dashboard() {
       return;
     }
 
-    setBlog(data);
+    setBlog(data as Blog);
     setShowSettings(false);
     toast.success("Blog created successfully!");
   };
@@ -512,6 +530,44 @@ export default function Dashboard() {
     });
 
     toast.info("Article idea rejected");
+  };
+
+  const handlePublishNow = async (postId: string) => {
+    try {
+      toast.info("Publishing post to your CMS...");
+      
+      const { data, error } = await supabase.functions.invoke('publish-to-cms', {
+        body: { blog_post_id: postId }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Post published successfully!");
+      if (blog) fetchBlogPosts(blog.id);
+    } catch (error: any) {
+      console.error("Publish error:", error);
+      toast.error("Failed to publish: " + error.message);
+    }
+  };
+
+  const handleGenerateFirstPost = async () => {
+    if (!blog) return;
+    
+    try {
+      toast.info("Generating your first blog post... This may take a minute.");
+      
+      const { data, error } = await supabase.functions.invoke('generate-blog-post', {
+        body: { blogId: blog.id }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("First post generated! Check your post queue.");
+      fetchBlogPosts(blog.id);
+    } catch (error: any) {
+      console.error("Generate error:", error);
+      toast.error("Failed to generate post: " + error.message);
+    }
   };
 
   const getStatusBadge = (status?: string) => {
@@ -739,6 +795,125 @@ export default function Dashboard() {
         </Card>
       ) : null}
 
+      {/* Article Types Card */}
+      {blog && (
+        <Card className="p-6 mb-6 bg-card shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Article Types</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage the types of content your AI generates
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/settings?tab=article-types')}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Manage Types
+            </Button>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {blog.article_types && Object.entries(blog.article_types)
+              .filter(([_, enabled]) => enabled)
+              .slice(0, 6)
+              .map(([type, _]) => (
+                <Badge key={type} variant="secondary">
+                  {ARTICLE_TYPE_LABELS[type]?.emoji} {ARTICLE_TYPE_LABELS[type]?.name || type}
+                </Badge>
+              ))}
+            {blog.article_types && Object.entries(blog.article_types).filter(([_, enabled]) => enabled).length > 6 && (
+              <Badge variant="outline">
+                +{Object.entries(blog.article_types).filter(([_, enabled]) => enabled).length - 6} more
+              </Badge>
+            )}
+            {(!blog.article_types || Object.keys(blog.article_types).length === 0) && (
+              <p className="text-sm text-muted-foreground">No article types configured yet</p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Post Queue Section */}
+      {blog && blogPosts.filter(p => p.publishing_status === 'pending').length > 0 && (
+        <Card className="p-6 bg-card shadow-sm mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Post Queue</h3>
+              <p className="text-sm text-muted-foreground">
+                Posts ready to be published to your site
+              </p>
+            </div>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20">
+              {blogPosts.filter(p => p.publishing_status === 'pending').length} Pending
+            </Badge>
+          </div>
+
+          <div className="space-y-3">
+            {blogPosts
+              .filter(p => p.publishing_status === 'pending')
+              .slice(0, 5)
+              .map((post, index) => {
+                const estimatedDate = new Date();
+                estimatedDate.setDate(estimatedDate.getDate() + index);
+                
+                return (
+                  <div 
+                    key={post.id} 
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/5 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-medium text-foreground mb-1">{post.title}</h4>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>Scheduled for {format(estimatedDate, 'MMM d, yyyy')}</span>
+                        </div>
+                        {post.article_type && (
+                          <Badge variant="outline" className="text-xs">
+                            {ARTICLE_TYPE_LABELS[post.article_type]?.name || post.article_type}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handlePublishNow(post.id)}
+                      >
+                        Publish Now
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate(`/blog/${post.slug}`)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          
+          {blogPosts.filter(p => p.publishing_status === 'pending').length > 5 && (
+            <div className="mt-4 text-center">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate('/blog')}
+              >
+                View All {blogPosts.filter(p => p.publishing_status === 'pending').length} Posts
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
+
         {/* Analytics / No Site Connected */}
         {!blog ? (
           <Card className="p-12 text-center bg-card shadow-sm">
@@ -755,6 +930,31 @@ export default function Dashboard() {
               <Button onClick={() => setShowOnboarding(true)}>
                 Connect Site
               </Button>
+            </div>
+          </Card>
+        ) : blogPosts.length === 0 ? (
+          <Card className="p-12 text-center bg-card shadow-sm">
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                No Articles Generated Yet
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Your AI engine is ready! Click the button below to generate your first blog post, or wait for automatic generation to start.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={handleGenerateFirstPost}
+                  className="w-full"
+                >
+                  Generate First Post Now
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Auto-generation is enabled. Posts will be created automatically based on your settings.
+                </p>
+              </div>
             </div>
           </Card>
         ) : (
