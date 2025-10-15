@@ -49,6 +49,7 @@ export default function Articles() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [blogId, setBlogId] = useState<string | null>(null);
+  const [isGeneratingArticle, setIsGeneratingArticle] = useState(false);
 
   useEffect(() => {
     fetchArticles();
@@ -137,6 +138,32 @@ export default function Articles() {
     }
   };
 
+  const handleGenerateArticle = async () => {
+    if (!blogId) {
+      toast.error("No blog found. Please connect your CMS first.");
+      return;
+    }
+    
+    setIsGeneratingArticle(true);
+    toast.info("Generating article... This may take a minute.");
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-blog-post', {
+        body: { blogId }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Article generated successfully!");
+      await fetchArticles();
+    } catch (error: any) {
+      console.error('Article generation error:', error);
+      toast.error(error.message || "Failed to generate article");
+    } finally {
+      setIsGeneratingArticle(false);
+    }
+  };
+
   const getPublishingStatusBadge = (status: string) => {
     switch (status) {
       case "published":
@@ -202,6 +229,14 @@ export default function Articles() {
             {pendingPosts.length} pending · {publishedPosts.length} published · {failedPosts.length} failed
           </p>
         </div>
+        <Button 
+          onClick={handleGenerateArticle}
+          disabled={isGeneratingArticle || !blogId}
+        >
+          {isGeneratingArticle && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          <FileText className="w-4 h-4 mr-2" />
+          Generate New Article
+        </Button>
       </div>
 
       {/* Pending Posts */}

@@ -135,7 +135,6 @@ export default function Dashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
-  const [isGeneratingArticle, setIsGeneratingArticle] = useState(false);
   const [blogForm, setBlogForm] = useState({
     subdomain: "",
     title: "",
@@ -534,33 +533,6 @@ export default function Dashboard() {
     toast.info("Article idea rejected");
   };
 
-  const handleGenerateArticle = async () => {
-    if (!blog) return;
-    
-    setIsGeneratingArticle(true);
-    toast.info("Generating article... This may take a minute.");
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-blog-post', {
-        body: { blogId: blog.id }
-      });
-      
-      if (error) throw error;
-      
-      toast.success("Article generated successfully! Check the queue to review.");
-      
-      // Refresh blog posts
-      if (blog.id) {
-        await fetchBlogPosts(blog.id);
-      }
-    } catch (error: any) {
-      console.error('Article generation error:', error);
-      toast.error(error.message || "Failed to generate article");
-    } finally {
-      setIsGeneratingArticle(false);
-    }
-  };
-
   const handleTestConnection = async () => {
     if (!blog || !blog.cms_platform || !blog.cms_site_url) return;
     
@@ -853,31 +825,19 @@ export default function Dashboard() {
                       Framer connections require manual verification. Test by publishing a post.
                     </p>
                   )}
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="default"
-                size="sm"
-                onClick={handleGenerateArticle}
-                disabled={isGeneratingArticle}
-              >
-                {isGeneratingArticle && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                <FileText className="w-4 h-4 mr-2" />
-                Generate Article
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowDisconnectDialog(true)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-              >
-                <Unplug className="w-4 h-4 mr-2" />
-                Disconnect
-              </Button>
             </div>
           </div>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setShowDisconnectDialog(true)}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+        >
+          <Unplug className="w-4 h-4 mr-2" />
+          Disconnect
+        </Button>
+      </div>
         </Card>
       ) : blog ? (
         <Card className="p-6 mb-6 bg-card shadow-sm border-dashed">

@@ -174,6 +174,19 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
 
       toast.success("CMS connected successfully!");
       setBlogId(resultData.id);
+      
+      // Automatically generate the first article
+      toast.info("Generating your first article...");
+      try {
+        await supabase.functions.invoke('generate-blog-post', {
+          body: { blogId: resultData.id }
+        });
+        toast.success("First article generated! Check your dashboard.");
+      } catch (genError) {
+        console.error('Error generating first article:', genError);
+        toast.error("CMS connected but article generation failed. You can generate articles from the Articles page.");
+      }
+      
       setCurrentStep('article-types');
     } catch (error: any) {
       toast.error("Failed to connect CMS: " + error.message);
