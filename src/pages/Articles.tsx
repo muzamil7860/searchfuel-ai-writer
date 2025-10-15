@@ -163,7 +163,7 @@ export default function Articles() {
       <div className="container max-w-6xl mx-auto py-12 px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Blog Post Queue</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Articles</h1>
             <p className="text-muted-foreground">Manage your generated blog posts</p>
           </div>
         </div>
@@ -197,7 +197,7 @@ export default function Articles() {
     <div className="container max-w-6xl mx-auto py-12 px-4">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Blog Post Queue</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Articles</h1>
           <p className="text-muted-foreground">
             {pendingPosts.length} pending · {publishedPosts.length} published · {failedPosts.length} failed
           </p>

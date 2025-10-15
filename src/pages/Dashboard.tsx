@@ -580,6 +580,23 @@ export default function Dashboard() {
     }
   };
 
+  const handleRejectPost = async (postId: string) => {
+    try {
+      const { error } = await supabase
+        .from("blog_posts")
+        .delete()
+        .eq("id", postId);
+
+      if (error) throw error;
+
+      toast.success("Article rejected and deleted");
+      if (blog) fetchBlogPosts(blog.id);
+    } catch (error: any) {
+      console.error("Reject error:", error);
+      toast.error("Failed to reject article: " + error.message);
+    }
+  };
+
   const handleGenerateFirstPost = async () => {
     if (!blog) return;
     
@@ -890,18 +907,18 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Post Queue Section */}
+      {/* Article Queue Section - Shows pending articles for approval */}
       {blog && blogPosts.filter(p => p.publishing_status === 'pending').length > 0 && (
         <Card className="p-6 bg-card shadow-sm mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Post Queue</h3>
+              <h3 className="text-lg font-semibold text-foreground">Articles</h3>
               <p className="text-sm text-muted-foreground">
-                Posts ready to be published to your site
+                Review and approve AI-generated articles before publishing
               </p>
             </div>
             <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20">
-              {blogPosts.filter(p => p.publishing_status === 'pending').length} Pending
+              {blogPosts.filter(p => p.publishing_status === 'pending').length} Pending Review
             </Badge>
           </div>
 
@@ -909,10 +926,7 @@ export default function Dashboard() {
             {blogPosts
               .filter(p => p.publishing_status === 'pending')
               .slice(0, 5)
-              .map((post, index) => {
-                const estimatedDate = new Date();
-                estimatedDate.setDate(estimatedDate.getDate() + index);
-                
+              .map((post) => {
                 return (
                   <div 
                     key={post.id} 
@@ -921,13 +935,9 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <h4 className="font-medium text-foreground mb-1">{post.title}</h4>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>Scheduled for {format(estimatedDate, 'MMM d, yyyy')}</span>
-                        </div>
                         {post.article_type && (
                           <Badge variant="outline" className="text-xs">
-                            {ARTICLE_TYPE_LABELS[post.article_type]?.name || post.article_type}
+                            {ARTICLE_TYPE_LABELS[post.article_type]?.emoji} {ARTICLE_TYPE_LABELS[post.article_type]?.name || post.article_type}
                           </Badge>
                         )}
                       </div>
@@ -935,18 +945,19 @@ export default function Dashboard() {
                     
                     <div className="flex items-center gap-2">
                       <Button 
-                        variant="outline" 
+                        variant="default" 
                         size="sm"
                         onClick={() => handlePublishNow(post.id)}
                       >
-                        Publish Now
+                        Approve
                       </Button>
                       <Button 
-                        variant="ghost" 
+                        variant="outline" 
                         size="sm"
-                        onClick={() => navigate(`/blog/${post.slug}`)}
+                        onClick={() => handleRejectPost(post.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
-                        <Eye className="w-4 h-4" />
+                        Reject
                       </Button>
                     </div>
                   </div>
@@ -959,9 +970,9 @@ export default function Dashboard() {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => navigate('/blog')}
+                onClick={() => navigate('/articles')}
               >
-                View All {blogPosts.filter(p => p.publishing_status === 'pending').length} Posts
+                View All {blogPosts.filter(p => p.publishing_status === 'pending').length} Articles
               </Button>
             </div>
           )}
