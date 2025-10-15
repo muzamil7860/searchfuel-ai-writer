@@ -157,7 +157,7 @@ const Index = () => {
             className="absolute inset-0 bg-cover bg-center opacity-20"
             style={{ backgroundImage: `url(${heroBackground})` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary/90" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a2332] via-[#1e2838] to-[#151d29]" />
           
           {/* Content */}
           <div className="relative z-10 container mx-auto px-6 py-20 pt-32">
