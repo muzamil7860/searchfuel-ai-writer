@@ -24,6 +24,7 @@ import {
   Clock,
   Unplug,
   AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { Label } from "@/components/ui/label";
@@ -532,6 +533,35 @@ export default function Dashboard() {
     toast.info("Article idea rejected");
   };
 
+  const handleTestConnection = async () => {
+    if (!blog || !blog.cms_platform || !blog.cms_site_url) return;
+    
+    toast.info("Testing connection to your CMS...");
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('test-cms-connection', {
+        body: {
+          platform: blog.cms_platform,
+          siteUrl: blog.cms_site_url,
+          apiKey: (blog as any).cms_credentials?.apiKey,
+          apiSecret: (blog as any).cms_credentials?.apiSecret,
+          accessToken: (blog as any).cms_credentials?.accessToken,
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        toast.success("✅ Connection verified!");
+      } else {
+        toast.error("❌ Connection failed: " + (data.error || "Unknown error"));
+      }
+    } catch (error: any) {
+      console.error("Connection test error:", error);
+      toast.error("Connection test failed: " + error.message);
+    }
+  };
+
   const handlePublishNow = async (postId: string) => {
     try {
       toast.info("Publishing post to your CMS...");
@@ -753,6 +783,30 @@ export default function Dashboard() {
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
                       {blogPosts.filter(p => p.publishing_status === 'publishing').length} publishing...
                     </Badge>
+                  )}
+                </div>
+                
+                {/* Connection Health Status */}
+                <div className="mt-4 p-3 border rounded-lg bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium">CMS Connected</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handleTestConnection}
+                    >
+                      Test Connection
+                    </Button>
+                  </div>
+                  
+                  {blog.cms_platform === 'framer' && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Framer connections require manual verification. Test by publishing a post.
+                    </p>
                   )}
                 </div>
               </div>

@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FileText, Calendar, Loader2, Eye, Trash2 } from "lucide-react";
+import { Loader2, FileText, Eye, Clock, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,22 +18,37 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Article {
+const ARTICLE_TYPE_LABELS: Record<string, { name: string; emoji: string }> = {
+  how_to: { name: "How-To Guides", emoji: "📚" },
+  listicle: { name: "Listicles", emoji: "📝" },
+  qa: { name: "Q&A Articles", emoji: "❓" },
+  news: { name: "News & Updates", emoji: "📰" },
+  roundup: { name: "Product Roundups", emoji: "🔍" },
+  versus: { name: "Comparison Articles", emoji: "⚖️" },
+  checklist: { name: "Checklists", emoji: "✅" },
+  advertorial: { name: "Advertorials", emoji: "📢" },
+  interactive_tool: { name: "Interactive Tools", emoji: "🛠️" },
+};
+
+interface BlogPost {
   id: string;
+  blog_id: string;
   title: string;
-  keyword: string;
-  intent: string;
-  content: any;
-  website_url: string;
+  slug: string;
   status: string;
+  publishing_status: string;
+  external_post_id: string | null;
+  article_type: string;
   created_at: string;
+  published_at: string;
 }
 
 export default function Articles() {
   const navigate = useNavigate();
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [blogId, setBlogId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchArticles();
@@ -40,14 +56,35 @@ export default function Articles() {
 
   const fetchArticles = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Get user's blog
+      const { data: blogData } = await supabase
+        .from("blogs")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!blogData) {
+        setArticles([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setBlogId(blogData.id);
+
+      // Fetch all blog posts for this blog
       const { data, error } = await supabase
-        .from("articles")
+        .from("blog_posts")
         .select("*")
+        .eq("blog_id", blogData.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
-      setArticles((data || []) as unknown as Article[]);
+      setArticles((data || []) as unknown as BlogPost[]);
     } catch (error) {
       console.error("Error fetching articles:", error);
       toast.error("Failed to load articles");
@@ -56,120 +93,287 @@ export default function Articles() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
     try {
       const { error } = await supabase
-        .from("articles")
+        .from("blog_posts")
         .delete()
-        .eq("id", id);
+        .eq("id", deleteId);
 
       if (error) throw error;
 
-      setArticles(articles.filter((a) => a.id !== id));
-      toast.success("Article deleted");
-    } catch (error) {
+      setArticles(articles.filter((a) => a.id !== deleteId));
+      toast.success("Article deleted successfully");
+    } catch (error: any) {
       console.error("Error deleting article:", error);
-      toast.error("Failed to delete article");
+      toast.error("Failed to delete article: " + error.message);
     } finally {
       setDeleteId(null);
     }
   };
 
-  const getIntentColor = (intent: string) => {
-    switch (intent.toLowerCase()) {
-      case "informational":
-        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-      case "commercial":
-        return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-      case "transactional":
-        return "bg-purple-500/10 text-purple-600 border-purple-500/20";
+  const handlePublishNow = async (postId: string) => {
+    if (!blogId) return;
+
+    try {
+      toast.info("Publishing post...");
+      
+      const { error } = await supabase.functions.invoke("publish-to-cms", {
+        body: {
+          blogId,
+          postId,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success("Post published successfully!");
+      await fetchArticles();
+    } catch (error: any) {
+      console.error("Error publishing post:", error);
+      toast.error("Failed to publish post: " + error.message);
+    }
+  };
+
+  const getPublishingStatusBadge = (status: string) => {
+    switch (status) {
+      case "published":
+        return <Badge variant="default" className="bg-green-600">Published</Badge>;
+      case "pending":
+        return <Badge variant="secondary" className="bg-blue-600 text-white">Pending</Badge>;
+      case "failed":
+        return <Badge variant="destructive">Failed</Badge>;
       default:
-        return "bg-gray-500/10 text-gray-600 border-gray-500/20";
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Articles</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          View and manage your generated articles
-        </p>
-      </div>
+  if (articles.length === 0) {
+    return (
+      <div className="container max-w-6xl mx-auto py-12 px-4">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Blog Post Queue</h1>
+            <p className="text-muted-foreground">Manage your generated blog posts</p>
+          </div>
+        </div>
 
-      {articles.length === 0 ? (
-        <Card className="p-12 text-center bg-card">
+        <Card className="p-12 text-center">
           <div className="max-w-md mx-auto">
             <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-accent" />
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">
-              Connect Your Site to Start Publishing Articles
+              No Posts Generated Yet
             </h3>
             <p className="text-muted-foreground mb-6">
-              Scan your website to discover keywords and start generating SEO-optimized content.
+              Your AI engine is ready! Posts will be generated automatically based on your settings.
             </p>
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate("/")}>
               Go to Dashboard
             </Button>
           </div>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((article) => (
-            <Card key={article.id} className="p-6 bg-card hover:shadow-lg transition-shadow">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2">
-                  {article.title}
-                </h3>
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="outline" className={getIntentColor(article.intent)}>
-                    {article.intent}
-                  </Badge>
-                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                    {article.keyword}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="w-3 h-3" />
-                  {new Date(article.created_at).toLocaleDateString()}
-                </div>
-              </div>
+      </div>
+    );
+  }
 
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => navigate(`/articles/${article.id}`)}
-                >
-                  <Eye className="w-4 h-4 mr-1" />
-                  View
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setDeleteId(article.id)}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-500/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </Card>
-          ))}
+  // Separate posts by status
+  const pendingPosts = articles.filter(a => a.publishing_status === 'pending');
+  const publishedPosts = articles.filter(a => a.publishing_status === 'published');
+  const failedPosts = articles.filter(a => a.publishing_status === 'failed');
+
+  return (
+    <div className="container max-w-6xl mx-auto py-12 px-4">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Blog Post Queue</h1>
+          <p className="text-muted-foreground">
+            {pendingPosts.length} pending · {publishedPosts.length} published · {failedPosts.length} failed
+          </p>
+        </div>
+      </div>
+
+      {/* Pending Posts */}
+      {pendingPosts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Clock className="w-6 h-6 text-blue-600" />
+            Pending Posts
+            <Badge variant="secondary" className="bg-blue-600 text-white">
+              {pendingPosts.length}
+            </Badge>
+          </h2>
+          <div className="grid gap-4">
+            {pendingPosts.map((post, index) => {
+              const estimatedDate = new Date();
+              estimatedDate.setDate(estimatedDate.getDate() + index);
+              
+              return (
+                <Card key={post.id} className="p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {getPublishingStatusBadge(post.publishing_status)}
+                        {post.article_type && (
+                          <Badge variant="outline">
+                            {ARTICLE_TYPE_LABELS[post.article_type]?.emoji} {ARTICLE_TYPE_LABELS[post.article_type]?.name || post.article_type}
+                          </Badge>
+                        )}
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">
+                        {post.title}
+                      </h3>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          <span>Scheduled for {format(estimatedDate, 'MMM d, yyyy')}</span>
+                        </div>
+                        <span>Created {format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handlePublishNow(post.id)}
+                      >
+                        Publish Now
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/blog/${post.slug}`)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       )}
 
+      {/* Published Posts */}
+      {publishedPosts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-green-600" />
+            Published Posts
+            <Badge variant="default" className="bg-green-600">
+              {publishedPosts.length}
+            </Badge>
+          </h2>
+          <div className="grid gap-4">
+            {publishedPosts.map((post) => (
+              <Card key={post.id} className="p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getPublishingStatusBadge(post.publishing_status)}
+                      {post.article_type && (
+                        <Badge variant="outline">
+                          {ARTICLE_TYPE_LABELS[post.article_type]?.emoji} {ARTICLE_TYPE_LABELS[post.article_type]?.name || post.article_type}
+                        </Badge>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      {post.title}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>Published {format(new Date(post.published_at || post.created_at), 'MMM d, yyyy')}</span>
+                      {post.external_post_id && (
+                        <Badge variant="outline" className="text-xs">
+                          External ID: {post.external_post_id}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/blog/${post.slug}`)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Failed Posts */}
+      {failedPosts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            Failed Posts
+            <Badge variant="destructive">
+              {failedPosts.length}
+            </Badge>
+          </h2>
+          <div className="grid gap-4">
+            {failedPosts.map((post) => (
+              <Card key={post.id} className="p-6 border-red-200 dark:border-red-900 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getPublishingStatusBadge(post.publishing_status)}
+                      {post.article_type && (
+                        <Badge variant="outline">
+                          {ARTICLE_TYPE_LABELS[post.article_type]?.emoji} {ARTICLE_TYPE_LABELS[post.article_type]?.name || post.article_type}
+                        </Badge>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      {post.title}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>Created {format(new Date(post.created_at), 'MMM d, yyyy')}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => handlePublishNow(post.id)}
+                    >
+                      Retry Publish
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/blog/${post.slug}`)}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -180,12 +384,7 @@ export default function Articles() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteId && handleDelete(deleteId)}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

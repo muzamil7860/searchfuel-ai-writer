@@ -119,8 +119,45 @@ serve(async (req) => {
         }
         break;
 
+      case "framer":
+        // Test Framer site accessibility
+        try {
+          const response = await fetch(siteUrl);
+          success = response.ok;
+          if (success) {
+            error = "Site accessible. Note: Framer API integration requires Framer Pro plan and may need manual setup.";
+          } else {
+            error = "Cannot access site. Check URL and ensure site is published.";
+          }
+        } catch (e) {
+          error = "Failed to access Framer site. Verify the URL is correct.";
+        }
+        break;
+
+      case "nextjs":
+        // Test Next.js deployment accessibility
+        try {
+          const response = await fetch(siteUrl);
+          success = response.ok;
+          if (!success) error = "Cannot access Next.js site. Verify URL is correct.";
+        } catch (e) {
+          error = "Failed to access Next.js site";
+        }
+        break;
+
+      case "wix":
+        // Test Wix site accessibility
+        try {
+          const response = await fetch(siteUrl);
+          success = response.ok;
+          if (!success) error = "Cannot access Wix site. Verify URL is correct.";
+        } catch (e) {
+          error = "Failed to access Wix site";
+        }
+        break;
+
       default:
-        // For platforms without API testing yet (wix, framer, nextjs)
+        // For any other platforms
         success = true;
         error = "Connection not tested - manual verification required";
     }

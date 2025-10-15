@@ -62,13 +62,13 @@ export default function Settings() {
           <h1 className="text-2xl font-semibold">Settings</h1>
         </div>
 
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="backlinks">Backlinks</TabsTrigger>
-            <TabsTrigger value="article-types">Article Types</TabsTrigger>
-            <TabsTrigger value="subscription">Subscription</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="article-types">Article Types</TabsTrigger>
+          <TabsTrigger value="backlinks">Backlinks</TabsTrigger>
+          <TabsTrigger value="subscription">Subscription</TabsTrigger>
+        </TabsList>
 
           <TabsContent value="account" className="space-y-6 mt-6">
             {/* Organization Section */}
@@ -128,18 +128,6 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="backlinks" className="mt-6">
-            {blogId ? (
-              <BacklinkSettings blogId={blogId} />
-            ) : (
-              <Card>
-                <CardContent className="flex flex-col items-center py-12">
-                  <p className="text-muted-foreground">Complete blog setup to configure backlinks</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
           <TabsContent value="article-types" className="mt-6">
             {blogId ? (
               <ArticleTypeSettings blogId={blogId} />
@@ -147,6 +135,18 @@ export default function Settings() {
               <Card>
                 <CardContent className="flex flex-col items-center py-12">
                   <p className="text-muted-foreground">Complete blog setup to configure article types</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="backlinks" className="mt-6">
+            {blogId ? (
+              <BacklinkSettings blogId={blogId} />
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center py-12">
+                  <p className="text-muted-foreground">Complete blog setup to configure backlinks</p>
                 </CardContent>
               </Card>
             )}
