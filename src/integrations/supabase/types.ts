@@ -62,6 +62,7 @@ export type Database = {
           date: string
           id: string
           page_views: number
+          post_id: string | null
           unique_visitors: number
         }
         Insert: {
@@ -72,6 +73,7 @@ export type Database = {
           date: string
           id?: string
           page_views?: number
+          post_id?: string | null
           unique_visitors?: number
         }
         Update: {
@@ -82,6 +84,7 @@ export type Database = {
           date?: string
           id?: string
           page_views?: number
+          post_id?: string | null
           unique_visitors?: number
         }
         Relationships: [
@@ -90,6 +93,13 @@ export type Database = {
             columns: ["blog_id"]
             isOneToOne: false
             referencedRelation: "blogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_analytics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -250,7 +260,9 @@ export type Database = {
           intent: string | null
           keyword: string
           language_code: string
+          last_rank_check: string | null
           location_code: number
+          ranking_position: number | null
           search_volume: number
           trend: string | null
           updated_at: string
@@ -265,7 +277,9 @@ export type Database = {
           intent?: string | null
           keyword: string
           language_code?: string
+          last_rank_check?: string | null
           location_code?: number
+          ranking_position?: number | null
           search_volume?: number
           trend?: string | null
           updated_at?: string
@@ -280,7 +294,9 @@ export type Database = {
           intent?: string | null
           keyword?: string
           language_code?: string
+          last_rank_check?: string | null
           location_code?: number
+          ranking_position?: number | null
           search_volume?: number
           trend?: string | null
           updated_at?: string

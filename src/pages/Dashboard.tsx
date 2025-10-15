@@ -87,6 +87,14 @@ interface BlogPost {
   views: number;
 }
 
+interface KeywordRanking {
+  id: string;
+  keyword: string;
+  ranking_position: number | null;
+  intent: string | null;
+  search_volume: number;
+}
+
 type DateRange = "7D" | "1M" | "3M" | "6M" | "1Y" | "All";
 
 export default function Dashboard() {
@@ -100,6 +108,7 @@ export default function Dashboard() {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [keywordRankings, setKeywordRankings] = useState<KeywordRanking[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>("1M");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -147,6 +156,7 @@ export default function Dashboard() {
       setBlog(data);
       fetchAnalytics(data.id);
       fetchBlogPosts(data.id);
+      fetchKeywordRankings();
     }
   };
 
@@ -191,25 +201,62 @@ export default function Dashboard() {
   };
 
   const fetchBlogPosts = async (blogId: string) => {
-    const { data, error } = await supabase
+    const { data: posts, error: postsError } = await supabase
       .from("blog_posts")
       .select("id, title, published_at")
       .eq("blog_id", blogId)
       .eq("status", "published")
       .order("published_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching blog posts:", error);
+    if (postsError) {
+      console.error("Error fetching blog posts:", postsError);
       return;
     }
 
-    // For now, set views to 0 as we don't have actual view tracking
-    const posts = (data || []).map((post) => ({
-      ...post,
-      views: 0,
-    }));
+    if (!posts || posts.length === 0) {
+      setBlogPosts([]);
+      return;
+    }
 
-    setBlogPosts(posts);
+    // Fetch view counts for each post from blog_analytics
+    const postsWithViews = await Promise.all(
+      posts.map(async (post) => {
+        const { data: analyticsData } = await supabase
+          .from("blog_analytics")
+          .select("page_views")
+          .eq("blog_id", blogId)
+          .eq("post_id", post.id);
+
+        const totalViews = analyticsData?.reduce((sum, row) => sum + (row.page_views || 0), 0) || 0;
+
+        return {
+          ...post,
+          views: totalViews,
+        };
+      })
+    );
+
+    setBlogPosts(postsWithViews);
+  };
+
+  const fetchKeywordRankings = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("keywords")
+      .select("id, keyword, ranking_position, intent, search_volume")
+      .eq("user_id", user.id)
+      .not("ranking_position", "is", null)
+      .order("ranking_position", { ascending: true })
+      .limit(10);
+
+    if (error) {
+      console.error("Error fetching keyword rankings:", error);
+      return;
+    }
+
+    setKeywordRankings(data || []);
   };
 
   useEffect(() => {
@@ -690,73 +737,164 @@ export default function Dashboard() {
           </Card>
         ) : (
           <>
-            {/* Traffic Chart */}
-            <Card className="p-6 mb-6 bg-card shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Total Visits</h3>
-                  <p className="text-sm text-muted-foreground">Track your blog traffic over time</p>
-                </div>
-                <div className="flex gap-2">
-                  {(["7D", "1M", "3M", "6M", "1Y", "All"] as DateRange[]).map((range) => (
-                    <Button
-                      key={range}
-                      variant={dateRange === range ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setDateRange(range)}
-                      className="h-8 px-3 text-xs"
-                    >
-                      {range}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              <div className="h-[300px]">
-                {analytics.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={analytics}>
-                      <defs>
-                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                      <XAxis 
-                        dataKey="date" 
-                        className="text-xs"
-                        stroke="hsl(var(--muted-foreground))"
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis 
-                        className="text-xs"
-                        stroke="hsl(var(--muted-foreground))"
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-                        }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="views" 
-                        stroke="hsl(var(--accent))" 
-                        strokeWidth={2}
-                        fill="url(#colorViews)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    No analytics data available yet
+            {/* Analytics Section - Total Visits and Visits by Blog Posts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Traffic Chart */}
+              <Card className="p-6 bg-card shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Total Visits</h3>
+                    <p className="text-sm text-muted-foreground">Track your blog traffic over time</p>
                   </div>
-                )}
-              </div>
-            </Card>
+                  <div className="flex gap-2">
+                    {(["7D", "1M", "3M", "6M", "1Y", "All"] as DateRange[]).map((range) => (
+                      <Button
+                        key={range}
+                        variant={dateRange === range ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setDateRange(range)}
+                        className="h-8 px-3 text-xs"
+                      >
+                        {range}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="h-[300px]">
+                  {analytics.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={analytics}>
+                        <defs>
+                          <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                        <XAxis 
+                          dataKey="date" 
+                          className="text-xs"
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis 
+                          className="text-xs"
+                          stroke="hsl(var(--muted-foreground))"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="views" 
+                          stroke="hsl(var(--accent))" 
+                          strokeWidth={2}
+                          fill="url(#colorViews)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      No analytics data available yet
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Visits by Blog Posts */}
+              <Card className="p-6 bg-card shadow-sm">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-foreground">Visits by Blog Posts</h3>
+                  <p className="text-sm text-muted-foreground">Performance of individual posts</p>
+                </div>
+                <div className="h-[300px] overflow-y-auto">
+                  {blogPosts.length > 0 ? (
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-card">
+                        <TableRow className="border-b hover:bg-transparent bg-muted/20">
+                          <TableHead className="font-semibold text-xs uppercase tracking-wide">Title</TableHead>
+                          <TableHead className="font-semibold text-xs uppercase tracking-wide w-28">Published</TableHead>
+                          <TableHead className="font-semibold text-xs uppercase tracking-wide w-20 text-right">Views</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {blogPosts.map((post) => (
+                          <TableRow key={post.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                            <TableCell className="py-3">
+                              <p className="font-medium text-sm text-foreground line-clamp-2">{post.title}</p>
+                            </TableCell>
+                            <TableCell className="py-3 text-xs text-muted-foreground">
+                              {new Date(post.published_at).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </TableCell>
+                            <TableCell className="py-3 text-sm text-right font-semibold">
+                              {post.views.toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      No published posts yet
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+
+            {/* Keyword Rankings Section */}
+            {keywordRankings.length > 0 && (
+              <Card className="p-6 mb-6 bg-card shadow-sm">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Keyword Rankings</h3>
+                  <p className="text-sm text-muted-foreground">Your site's position for tracked keywords</p>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b hover:bg-transparent bg-muted/20">
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide">Keyword</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide w-24 text-center">Position</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide w-32">Intent</TableHead>
+                      <TableHead className="font-semibold text-xs uppercase tracking-wide w-28 text-right">Search Volume</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {keywordRankings.map((ranking) => (
+                      <TableRow key={ranking.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                        <TableCell className="py-4">
+                          <p className="font-medium text-sm text-foreground">{ranking.keyword}</p>
+                        </TableCell>
+                        <TableCell className="py-4 text-center">
+                          <Badge 
+                            variant={ranking.ranking_position && ranking.ranking_position <= 10 ? "default" : "secondary"}
+                            className="font-semibold"
+                          >
+                            #{ranking.ranking_position}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <Badge variant="outline" className="text-xs">
+                            {ranking.intent || "unknown"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-4 text-sm text-right font-medium text-muted-foreground">
+                          {ranking.search_volume.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
 
             {/* Blog Posts Table */}
             {blogPosts.length > 0 && (
