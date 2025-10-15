@@ -354,12 +354,16 @@ Focus on topics related to their industry that would help their target audience.
             .replace(/^(How to|Why|What is|When to)/i, '')
             .trim();
 
-          const imagePrompt = `Create an eye-catching thumbnail image representing: ${cleanTopic}.
-Visual style: Viral YouTube thumbnail - bold, vibrant, attention-grabbing.
-CRITICAL: NO TEXT, NO WORDS, NO LETTERS, NO TITLES - only pure visual imagery.
-Use dynamic composition, high contrast, professional quality.
-Theme: ${blog.industry || 'business'} industry
-Format: 16:9 aspect ratio, centered subject, dramatic lighting.`;
+          const imagePrompt = `Create a clean, professional thumbnail for: ${cleanTopic}.
+Style: Simple viral thumbnail with SINGLE focal point, minimal elements, clean composition.
+CRITICAL RULES:
+- NO TEXT, NO WORDS, NO LETTERS whatsoever
+- ONE clear subject/object only - not busy
+- Simple background - solid color or subtle gradient
+- Professional photography quality
+- Clean, uncluttered composition
+Industry context: ${blog.industry || 'business'}
+Format: 16:9 aspect ratio, centered single subject.`;
 
           const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
