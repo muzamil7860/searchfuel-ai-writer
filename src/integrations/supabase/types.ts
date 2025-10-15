@@ -111,9 +111,12 @@ export type Database = {
           content: string
           created_at: string
           excerpt: string | null
+          external_post_id: string | null
           featured_image: string | null
           id: string
+          last_published_at: string | null
           published_at: string | null
+          publishing_status: string | null
           slug: string
           status: string
           title: string
@@ -125,9 +128,12 @@ export type Database = {
           content: string
           created_at?: string
           excerpt?: string | null
+          external_post_id?: string | null
           featured_image?: string | null
           id?: string
+          last_published_at?: string | null
           published_at?: string | null
+          publishing_status?: string | null
           slug: string
           status?: string
           title: string
@@ -139,9 +145,12 @@ export type Database = {
           content?: string
           created_at?: string
           excerpt?: string | null
+          external_post_id?: string | null
           featured_image?: string | null
           id?: string
+          last_published_at?: string | null
           published_at?: string | null
+          publishing_status?: string | null
           slug?: string
           status?: string
           title?: string

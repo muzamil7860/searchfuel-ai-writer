@@ -14,6 +14,9 @@ interface BlogPost {
   published_at: string;
   featured_image: string | null;
   article_type: string | null;
+  publishing_status: string | null;
+  external_post_id: string | null;
+  blog_id: string;
 }
 
 const ARTICLE_TYPE_LABELS: Record<string, { name: string; emoji: string }> = {
@@ -40,7 +43,7 @@ export default function Blog() {
     try {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("id, title, excerpt, slug, published_at, featured_image, article_type")
+        .select("id, title, excerpt, slug, published_at, featured_image, article_type, publishing_status, external_post_id, blog_id")
         .eq("status", "published")
         .order("published_at", { ascending: false });
 

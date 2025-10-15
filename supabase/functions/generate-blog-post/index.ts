@@ -442,6 +442,41 @@ Format: 16:9 aspect ratio, centered single subject.`;
         });
 
         console.log(`Generated ${selectedArticleType.name} post for blog ${blog.id}: ${postData.title}`);
+
+        // Auto-publish to CMS if configured
+        if (blog.cms_platform && blog.cms_credentials) {
+          console.log(`Auto-publishing to ${blog.cms_platform}...`);
+          
+          // Update status to publishing
+          await supabase
+            .from('blog_posts')
+            .update({ publishing_status: 'publishing' })
+            .eq('id', post.id);
+          
+          try {
+            // Invoke publish function
+            const { data: publishResult, error: publishError } = await supabase.functions.invoke(
+              'publish-to-cms',
+              { body: { blog_post_id: post.id } }
+            );
+            
+            if (publishError) {
+              console.error('Failed to publish to CMS:', publishError);
+              await supabase
+                .from('blog_posts')
+                .update({ publishing_status: 'failed' })
+                .eq('id', post.id);
+            } else {
+              console.log(`Successfully published to ${blog.cms_platform}`);
+            }
+          } catch (publishErr) {
+            console.error('Error during CMS publishing:', publishErr);
+            await supabase
+              .from('blog_posts')
+              .update({ publishing_status: 'failed' })
+              .eq('id', post.id);
+          }
+        }
       } catch (error) {
         console.error(`Error generating post for blog ${blog.id}:`, error);
         results.push({

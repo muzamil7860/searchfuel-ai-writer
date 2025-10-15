@@ -85,6 +85,8 @@ interface BlogPost {
   title: string;
   published_at: string;
   views: number;
+  publishing_status: string | null;
+  external_post_id: string | null;
 }
 
 interface KeywordRanking {
@@ -203,7 +205,7 @@ export default function Dashboard() {
   const fetchBlogPosts = async (blogId: string) => {
     const { data: posts, error: postsError } = await supabase
       .from("blog_posts")
-      .select("id, title, published_at")
+      .select("id, title, published_at, publishing_status, external_post_id")
       .eq("blog_id", blogId)
       .eq("status", "published")
       .order("published_at", { ascending: false });
@@ -676,6 +678,23 @@ export default function Dashboard() {
                     {blog.cms_site_url}
                     <ExternalLink className="w-3 h-3" />
                   </a>
+                </div>
+                <div className="mt-2 flex items-center gap-3 text-xs">
+                  {blogPosts.filter(p => p.publishing_status === 'published').length > 0 && (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                      {blogPosts.filter(p => p.publishing_status === 'published').length} published to CMS
+                    </Badge>
+                  )}
+                  {blogPosts.filter(p => p.publishing_status === 'failed').length > 0 && (
+                    <Badge variant="outline" className="bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                      {blogPosts.filter(p => p.publishing_status === 'failed').length} failed
+                    </Badge>
+                  )}
+                  {blogPosts.filter(p => p.publishing_status === 'publishing').length > 0 && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
+                      {blogPosts.filter(p => p.publishing_status === 'publishing').length} publishing...
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>

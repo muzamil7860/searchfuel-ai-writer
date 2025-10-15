@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.generate-missing-images]
 verify_jwt = false
+
+[functions.publish-to-cms]
+verify_jwt = false
