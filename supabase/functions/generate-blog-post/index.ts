@@ -348,9 +348,18 @@ Focus on topics related to their industry that would help their target audience.
         try {
           console.log(`Generating featured image for: ${postData.title}`);
           
-          const imagePrompt = `Professional blog header image for: ${postData.title}. 
-Theme: ${blog.industry || 'business'}, modern, clean design, wide header image, 16:9 aspect ratio.
-Style: professional, minimalist, high-quality.`;
+          // Extract core topic from title (remove common prefixes)
+          const cleanTopic = postData.title
+            .replace(/^\d+\s+(Benefits|Ways|Tips|Reasons|Steps)/i, '')
+            .replace(/^(How to|Why|What is|When to)/i, '')
+            .trim();
+
+          const imagePrompt = `Create an eye-catching thumbnail image representing: ${cleanTopic}.
+Visual style: Viral YouTube thumbnail - bold, vibrant, attention-grabbing.
+CRITICAL: NO TEXT, NO WORDS, NO LETTERS, NO TITLES - only pure visual imagery.
+Use dynamic composition, high contrast, professional quality.
+Theme: ${blog.industry || 'business'} industry
+Format: 16:9 aspect ratio, centered subject, dramatic lighting.`;
 
           const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",

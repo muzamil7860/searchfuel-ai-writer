@@ -16,7 +16,6 @@ import PublicBlog from "./pages/PublicBlog";
 import PublicBlogPost from "./pages/PublicBlogPost";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
-import GenerateImages from "./pages/GenerateImages";
 import { ProtectedRoute } from "./layouts/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -40,8 +39,6 @@ const App = () => (
           {/* SearchFuel blog routes - must come before subdomain routes */}
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
-          {/* Utility routes */}
-          <Route path="/generate-images" element={<GenerateImages />} />
           {/* Public blog routes */}
           <Route path="/:subdomain" element={<PublicBlog />} />
           <Route path="/:subdomain/:slug" element={<PublicBlogPost />} />

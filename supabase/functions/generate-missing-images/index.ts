@@ -21,13 +21,12 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    console.log('Fetching blog posts without featured images...');
+    console.log('Fetching ALL blog posts to regenerate images...');
 
-    // Get all posts without featured images
+    // Get ALL posts to regenerate images with new viral thumbnail style
     const { data: posts, error: fetchError } = await supabase
       .from('blog_posts')
-      .select('id, title, blog_id, blogs(industry)')
-      .is('featured_image', null);
+      .select('id, title, blog_id, blogs(industry)');
 
     if (fetchError) {
       console.error('Error fetching posts:', fetchError);
@@ -35,25 +34,35 @@ Deno.serve(async (req) => {
     }
 
     if (!posts || posts.length === 0) {
-      console.log('No posts found without featured images');
+      console.log('No posts found');
       return new Response(
-        JSON.stringify({ message: 'No posts need images', updated: 0 }),
+        JSON.stringify({ message: 'No posts found', updated: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Found ${posts.length} posts without images. Generating...`);
+    console.log(`Found ${posts.length} posts. Regenerating ALL images with viral thumbnail style...`);
 
     const results = [];
 
     for (const post of posts) {
       try {
-        console.log(`Generating image for: ${post.title}`);
+        console.log(`Generating viral thumbnail image for: ${post.title}`);
 
         const industry = (post.blogs as any)?.industry || 'business';
-        const imagePrompt = `Professional blog header image for: ${post.title}. 
-Theme: ${industry}, modern, clean design, wide header image, 16:9 aspect ratio.
-Style: professional, minimalist, high-quality.`;
+        
+        // Extract core topic from title (remove common prefixes)
+        const cleanTopic = post.title
+          .replace(/^\d+\s+(Benefits|Ways|Tips|Reasons|Steps)/i, '')
+          .replace(/^(How to|Why|What is|When to)/i, '')
+          .trim();
+
+        const imagePrompt = `Create an eye-catching thumbnail image representing: ${cleanTopic}.
+Visual style: Viral YouTube thumbnail - bold, vibrant, attention-grabbing.
+CRITICAL: NO TEXT, NO WORDS, NO LETTERS, NO TITLES - only pure visual imagery.
+Use dynamic composition, high contrast, professional quality.
+Theme: ${industry} industry
+Format: 16:9 aspect ratio, centered subject, dramatic lighting.`;
 
         const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
