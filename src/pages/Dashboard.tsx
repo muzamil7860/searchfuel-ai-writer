@@ -932,32 +932,7 @@ export default function Dashboard() {
               </Button>
             </div>
           </Card>
-        ) : blogPosts.length === 0 ? (
-          <Card className="p-12 text-center bg-card shadow-sm">
-            <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                No Articles Generated Yet
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Your AI engine is ready! Click the button below to generate your first blog post, or wait for automatic generation to start.
-              </p>
-              <div className="flex flex-col gap-3">
-                <Button 
-                  onClick={handleGenerateFirstPost}
-                  className="w-full"
-                >
-                  Generate First Post Now
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Auto-generation is enabled. Posts will be created automatically based on your settings.
-                </p>
-              </div>
-            </div>
-          </Card>
-        ) : (
+          ) : (
           <>
             {/* Analytics Section - Total Visits and Visits by Blog Posts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
