@@ -169,7 +169,7 @@ const Index = () => {
               </div>
 
               {/* Heading */}
-              <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground mb-6 animate-fade-in leading-tight">
+              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-fade-in leading-tight">
                 Boost Your Search
                 <br />
                 <span className="bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent">
@@ -178,7 +178,7 @@ const Index = () => {
               </h1>
 
               {/* Subheading */}
-              <p className="text-xl md:text-2xl text-primary-foreground/80 mb-12 max-w-2xl mx-auto animate-fade-in">
+              <p className="text-xl md:text-2xl text-white/80 mb-12 max-w-2xl mx-auto animate-fade-in">
                 Get a free SEO health check. SearchFuel analyzes your website and recommends high-impact content opportunities.
               </p>
 
@@ -218,19 +218,19 @@ const Index = () => {
 
               {/* Features */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto animate-fade-in">
-                <div className="flex items-center justify-center gap-3 text-primary-foreground/90">
+                <div className="flex items-center justify-center gap-3 text-white/90">
                   <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 text-accent" />
                   </div>
                   <span className="font-medium">Instant Analysis</span>
                 </div>
-                <div className="flex items-center justify-center gap-3 text-primary-foreground/90">
+                <div className="flex items-center justify-center gap-3 text-white/90">
                   <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-accent" />
                   </div>
                   <span className="font-medium">AI Recommendations</span>
                 </div>
-                <div className="flex items-center justify-center gap-3 text-primary-foreground/90">
+                <div className="flex items-center justify-center gap-3 text-white/90">
                   <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
                     <Zap className="w-5 h-5 text-accent" />
                   </div>
