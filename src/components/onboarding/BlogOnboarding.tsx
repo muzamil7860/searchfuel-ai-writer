@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArticleTypeSettings } from "@/components/settings/ArticleTypeSettings";
 
 type CMSPlatform = 
   | "wordpress" 
@@ -51,6 +52,8 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
   const [selectedPlatform, setSelectedPlatform] = useState<CMSPlatform | null>(null);
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'platform' | 'connection' | 'article-types'>('platform');
+  const [blogId, setBlogId] = useState<string | null>(null);
   const [connectionData, setConnectionData] = useState<CMSConnection>({
     platform: "wordpress",
     siteUrl: "",
@@ -115,7 +118,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
       // Extract site name from URL for title
       const siteName = new URL(formattedUrl).hostname.split('.')[0];
 
-      const { error } = await supabase.from("blogs").insert({
+      const { data, error } = await supabase.from("blogs").insert({
         user_id: user.id,
         mode: "existing_site",
         subdomain: null,
@@ -140,17 +143,23 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
           accessToken: connectionData.accessToken,
           storeId: connectionData.storeId,
         },
-      });
+      }).select().single();
 
       if (error) throw error;
 
       toast.success("CMS connected successfully!");
-      onComplete();
+      setBlogId(data.id);
+      setCurrentStep('article-types');
     } catch (error: any) {
       toast.error("Failed to connect CMS: " + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleArticleTypesSaved = () => {
+    toast.success("Article preferences saved!");
+    onComplete();
   };
 
   const renderConnectionForm = () => {
@@ -164,7 +173,10 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setSelectedPlatform(null)}
+            onClick={() => {
+              setSelectedPlatform(null);
+              setCurrentStep('platform');
+            }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -282,7 +294,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
               <li>Enter your site URL (e.g., yourdomain.com)</li>
               <li>Provide required credentials (API keys/tokens)</li>
               <li>Test the connection to verify credentials</li>
-              <li>Click "Connect Site" to complete the setup</li>
+              <li>Click "Continue" to select article types</li>
             </ol>
           </div>
 
@@ -312,7 +324,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
                   Connecting...
                 </>
               ) : (
-                "Connect Site"
+                "Continue"
               )}
             </Button>
           </div>
@@ -321,7 +333,27 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
     );
   };
 
-  if (selectedPlatform) {
+  // Article Types Step
+  if (currentStep === 'article-types' && blogId) {
+    return (
+      <Card className="p-8 bg-card max-w-4xl">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Select Article Types</h2>
+          <p className="text-muted-foreground">
+            Choose the content formats that best fit your audience. You can change this anytime in settings.
+          </p>
+        </div>
+        <ArticleTypeSettings 
+          blogId={blogId} 
+          isOnboarding={true}
+          onSave={handleArticleTypesSaved}
+        />
+      </Card>
+    );
+  }
+
+  // Connection Form Step
+  if (currentStep === 'connection' && selectedPlatform) {
     return (
       <Card className="p-8 bg-card max-w-2xl">
         {renderConnectionForm()}
@@ -329,6 +361,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
     );
   }
 
+  // Platform Selection Step
   return (
     <Card className="p-8 bg-card max-w-4xl">
       <div className="mb-8">
@@ -345,6 +378,7 @@ export function BlogOnboarding({ open, onComplete, onCancel }: BlogOnboardingPro
             onClick={() => {
               setSelectedPlatform(platform.id);
               setConnectionData({ ...connectionData, platform: platform.id });
+              setCurrentStep('connection');
             }}
             className="p-4 rounded-lg border-2 border-border hover:border-accent transition-all bg-card hover:bg-accent/5 flex flex-col items-center gap-2 text-center"
           >

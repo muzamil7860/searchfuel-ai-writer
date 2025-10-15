@@ -14,6 +14,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import NotFound from "./pages/NotFound";
 import PublicBlog from "./pages/PublicBlog";
 import PublicBlogPost from "./pages/PublicBlogPost";
+import Blog from "./pages/Blog";
 import { ProtectedRoute } from "./layouts/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,9 @@ const App = () => (
             <Route path="/keywords" element={<Keywords />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
+          {/* SearchFuel blog routes - must come before subdomain routes */}
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<PublicBlogPost />} />
           {/* Public blog routes */}
           <Route path="/:subdomain" element={<PublicBlog />} />
           <Route path="/:subdomain/:slug" element={<PublicBlogPost />} />

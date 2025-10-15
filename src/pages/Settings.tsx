@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { BacklinkSettings } from "@/components/settings/BacklinkSettings";
+import { ArticleTypeSettings } from "@/components/settings/ArticleTypeSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Settings() {
@@ -18,7 +19,7 @@ export default function Settings() {
   const [blogId, setBlogId] = useState<string | null>(null);
   
   const tabParam = searchParams.get('tab');
-  const defaultTab = (tabParam === 'backlinks' || tabParam === 'subscription') ? tabParam : 'account';
+  const defaultTab = (tabParam === 'backlinks' || tabParam === 'article-types' || tabParam === 'subscription') ? tabParam : 'account';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -62,9 +63,10 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="backlinks">Backlinks</TabsTrigger>
+            <TabsTrigger value="article-types">Article Types</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
           </TabsList>
 
@@ -133,6 +135,18 @@ export default function Settings() {
               <Card>
                 <CardContent className="flex flex-col items-center py-12">
                   <p className="text-muted-foreground">Complete blog setup to configure backlinks</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="article-types" className="mt-6">
+            {blogId ? (
+              <ArticleTypeSettings blogId={blogId} />
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center py-12">
+                  <p className="text-muted-foreground">Complete blog setup to configure article types</p>
                 </CardContent>
               </Card>
             )}

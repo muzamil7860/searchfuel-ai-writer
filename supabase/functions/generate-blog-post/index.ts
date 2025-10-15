@@ -6,6 +6,155 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const ARTICLE_TYPE_GUIDELINES: Record<string, string> = {
+  listicle: `Format as a numbered list article with 7-15 items. Structure:
+- Engaging introduction explaining the list's value
+- Each list item should have:
+  * Bold numbered heading (e.g., "1. Clear Benefit Title")
+  * 2-3 paragraphs of detailed explanation
+  * Specific examples or data points
+  * Actionable takeaways
+- Conclusion summarizing key points
+Use subheadings for each list item.`,
+
+  how_to: `Format as a comprehensive step-by-step tutorial. Structure:
+- Introduction: Explain what readers will learn and why it matters
+- Prerequisites section (if needed)
+- Numbered steps (typically 5-12 steps):
+  * Clear action-oriented step title
+  * Detailed instructions with context
+  * Tips, warnings, or best practices
+  * Expected outcomes for each step
+- Conclusion with next steps or additional resources
+Include relevant screenshots or visual placeholders.`,
+
+  checklist: `Format as an actionable checklist article. Structure:
+- Introduction: Explain the checklist's purpose and impact
+- Main checklist with 10-20 items organized in logical sections
+- Each item should include:
+  * Checkbox-style formatting (use • or ☐)
+  * Clear, action-oriented item
+  * Brief 1-2 sentence explanation of why it matters
+- Optional: Priority indicators (High/Medium/Low)
+- Conclusion: Emphasize completeness and benefits
+Make items specific and immediately actionable.`,
+
+  qa: `Format as a Q&A article addressing common questions. Structure:
+- Introduction: Explain the topic and why these questions matter
+- 8-15 Q&A pairs organized by theme/difficulty:
+  * **Question:** Bold, clear question from user perspective
+  * **Answer:** Comprehensive 2-4 paragraph answer with examples
+  * Include data, expert insights, or real scenarios
+- Optional: "Frequently Asked Questions" subsections
+- Conclusion: Summary and encouragement to ask more
+Write questions as real users would ask them.`,
+
+  versus: `Format as a detailed comparison article. Structure:
+- Introduction: Explain what's being compared and for whom
+- Overview of each option (2-3 options):
+  * Brief description
+  * Key characteristics
+  * Ideal use cases
+- Side-by-side comparison table (if applicable)
+- Detailed comparison across 5-7 criteria:
+  * Clear criterion heading
+  * How each option performs
+  * Winner or trade-offs
+- Final verdict/recommendation based on different scenarios
+- Conclusion: Help readers make the right choice
+Stay objective and fair to all options.`,
+
+  roundup: `Format as a curated collection or roundup article. Structure:
+- Introduction: Explain the topic and selection criteria
+- 8-15 items/tactics/tools, each featuring:
+  * Clear title/name
+  * Brief description (2-3 sentences)
+  * Why it made the list (key benefits)
+  * Real example or use case
+  * Link or resource (if applicable)
+- Optional: Categorize items into subsections
+- Conclusion: Encourage readers to try multiple items
+Focus on high-value, actionable items with proven results.`,
+
+  news: `Format as a news/update article. Structure:
+- Headline-style introduction: What happened and why it matters
+- Background: Context for readers unfamiliar with the topic
+- Main news content:
+  * Key facts and details
+  * Official statements or data
+  * Timeline of events (if relevant)
+- Analysis: What this means for readers
+  * Impact on industry/users
+  * Expert perspectives
+  * Predictions or implications
+- Actionable takeaways: What readers should do now
+Keep tone timely, factual, and authoritative.`,
+
+  interactive_tool: `Format as an article featuring an interactive tool/calculator. Structure:
+- Introduction: Explain the problem the tool solves
+- How to use the tool:
+  * Step-by-step instructions
+  * Input descriptions
+  * What outputs mean
+- [Tool Placeholder]: Interactive element would go here
+- Interpreting results:
+  * What different outcomes mean
+  * Actionable recommendations based on results
+  * Examples of calculations
+- Additional context: Related tips and best practices
+- Conclusion: Encourage tool usage and next steps
+Emphasize practical value and ease of use.`,
+
+  advertorial: `Format as product-focused comparison/advertorial content. Structure:
+- Introduction: Present the problem/need objectively
+- Market overview: Briefly mention 2-3 competitive solutions
+- Deep dive on your solution:
+  * Key features and benefits
+  * How it solves the problem uniquely
+  * Real customer success stories
+  * Pricing transparency
+- Head-to-head comparison:
+  * Clear comparison across 5-7 factors
+  * Honest about trade-offs
+  * Highlight unique advantages
+- Conclusion: Clear CTA and next steps
+Balance promotional content with genuine value and objectivity.`,
+};
+
+function getArticleTypeGuidelines(articleType: string): string {
+  return ARTICLE_TYPE_GUIDELINES[articleType] || "";
+}
+
+function selectRandomArticleType(articleTypes: Record<string, boolean>): { type: string; name: string } {
+  const enabledTypes = Object.entries(articleTypes)
+    .filter(([_, enabled]) => enabled)
+    .map(([type]) => type);
+
+  if (enabledTypes.length === 0) {
+    // Default to listicle if none enabled
+    return { type: "listicle", name: "Listicle" };
+  }
+
+  const randomType = enabledTypes[Math.floor(Math.random() * enabledTypes.length)];
+  
+  const typeNames: Record<string, string> = {
+    listicle: "Listicle",
+    how_to: "How-to Guide",
+    checklist: "Checklist",
+    qa: "Q&A Article",
+    versus: "Versus Comparison",
+    roundup: "Roundup",
+    news: "News Article",
+    interactive_tool: "Interactive Tool",
+    advertorial: "Advertorial",
+  };
+
+  return {
+    type: randomType,
+    name: typeNames[randomType] || randomType,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,6 +203,22 @@ serve(async (req) => {
 
     for (const blog of blogsToProcess) {
       try {
+        // Select article type based on blog preferences
+        const articleTypes = blog.article_types || {
+          listicle: true,
+          how_to: true,
+          checklist: true,
+          qa: true,
+          versus: true,
+          roundup: true,
+          news: true,
+          interactive_tool: true,
+          advertorial: true,
+        };
+
+        const selectedArticleType = selectRandomArticleType(articleTypes);
+        console.log(`Selected article type for blog ${blog.id}: ${selectedArticleType.name}`);
+
         // Prepare backlink context
         const targetPages = blog.target_pages || [];
         const backlinkKeywords = targetPages
@@ -77,8 +242,12 @@ Company Details:
 - Website: ${blog.website_homepage}
 ${blog.competitors?.length > 0 ? `- Competitors: ${blog.competitors.map((c: any) => c.name).join(", ")}` : ""}
 
-Requirements:
-- Write a 1500-2000 word blog post
+Article Type: ${selectedArticleType.name}
+
+${getArticleTypeGuidelines(selectedArticleType.type)}
+
+General Requirements:
+- Write approximately 2000 words (aim for 1800-2200)
 - Include an engaging title optimized for SEO
 - Write a compelling excerpt (150-200 characters)
 - Use natural keyword integration
@@ -86,7 +255,7 @@ Requirements:
 - Make it valuable for the target audience
 - Use markdown formatting for structure${backlinkContext}
 
-Focus on topics related to their industry that would help their target audience.`;
+Focus on topics related to their industry that would help their target audience. Follow the article type format strictly.`;
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -113,7 +282,9 @@ Focus on topics related to their industry that would help their target audience.
         // Try to parse JSON from the response
         let postData;
         try {
-          postData = JSON.parse(generatedText);
+          // Remove markdown code blocks if present
+          const cleanedText = generatedText.replace(/```json\n?|\n?```/g, '').trim();
+          postData = JSON.parse(cleanedText);
         } catch {
           // If not JSON, extract manually
           const lines = generatedText.split("\n");
@@ -171,7 +342,7 @@ Focus on topics related to their industry that would help their target audience.
 
         console.log(`Inserted ${linksInserted} backlinks into post: ${insertedLinks.map(l => l.keyword).join(", ")}`);
 
-        // Insert blog post
+        // Insert blog post with article type
         const { data: post, error: insertError } = await supabase
           .from("blog_posts")
           .insert({
@@ -180,6 +351,7 @@ Focus on topics related to their industry that would help their target audience.
             slug,
             excerpt: postData.excerpt,
             content: processedContent,
+            article_type: selectedArticleType.type,
             status: "published",
             published_at: new Date().toISOString(),
           })
@@ -209,12 +381,13 @@ Focus on topics related to their industry that would help their target audience.
           blogId: blog.id,
           postId: post.id,
           title: postData.title,
+          articleType: selectedArticleType.name,
           backlinksInserted: linksInserted,
           links: insertedLinks,
           success: true,
         });
 
-        console.log(`Generated post for blog ${blog.id}: ${postData.title}`);
+        console.log(`Generated ${selectedArticleType.name} post for blog ${blog.id}: ${postData.title}`);
       } catch (error) {
         console.error(`Error generating post for blog ${blog.id}:`, error);
         results.push({

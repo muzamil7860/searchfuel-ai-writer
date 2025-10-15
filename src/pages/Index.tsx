@@ -125,6 +125,9 @@ const Index = () => {
           </div>
           
           <nav className="flex items-center gap-3">
+            <Button variant="ghost" onClick={() => navigate("/blog")} className="text-white hover:bg-white/10">
+              Examples
+            </Button>
             {user ? (
               <>
                 <Button onClick={() => navigate("/dashboard")} variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">

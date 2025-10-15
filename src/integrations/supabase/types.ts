@@ -106,6 +106,7 @@ export type Database = {
       }
       blog_posts: {
         Row: {
+          article_type: string | null
           blog_id: string
           content: string
           created_at: string
@@ -119,6 +120,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          article_type?: string | null
           blog_id: string
           content: string
           created_at?: string
@@ -132,6 +134,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          article_type?: string | null
           blog_id?: string
           content?: string
           created_at?: string
@@ -156,6 +159,7 @@ export type Database = {
       }
       blogs: {
         Row: {
+          article_types: Json | null
           auto_post_enabled: boolean | null
           backlink_strategy: string | null
           cms_credentials: Json | null
@@ -187,6 +191,7 @@ export type Database = {
           website_homepage: string | null
         }
         Insert: {
+          article_types?: Json | null
           auto_post_enabled?: boolean | null
           backlink_strategy?: string | null
           cms_credentials?: Json | null
@@ -218,6 +223,7 @@ export type Database = {
           website_homepage?: string | null
         }
         Update: {
+          article_types?: Json | null
           auto_post_enabled?: boolean | null
           backlink_strategy?: string | null
           cms_credentials?: Json | null
