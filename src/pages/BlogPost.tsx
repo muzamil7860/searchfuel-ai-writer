@@ -103,7 +103,23 @@ const BlogPost = () => {
             Published on {format(new Date(post.published_at), "MMMM d, yyyy")}
           </p>
 
-          <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-ul:text-foreground/90 prose-ol:text-foreground/90 prose-li:text-foreground/90 prose-a:text-primary hover:prose-a:text-primary/80">
+          <div className="prose prose-lg dark:prose-invert max-w-none
+            prose-headings:font-bold prose-headings:text-foreground
+            prose-h1:text-5xl prose-h1:mb-6 prose-h1:mt-8 prose-h1:leading-tight
+            prose-h2:text-3xl prose-h2:mb-4 prose-h2:mt-8 prose-h2:pb-3 prose-h2:border-b prose-h2:border-border
+            prose-h3:text-2xl prose-h3:mb-3 prose-h3:mt-6
+            prose-p:text-base prose-p:leading-relaxed prose-p:mb-4 prose-p:text-foreground/90
+            prose-ul:my-6 prose-ol:my-6 prose-ul:text-foreground/90 prose-ol:text-foreground/90
+            prose-li:mb-2 prose-li:text-foreground/90
+            prose-strong:text-foreground prose-strong:font-bold
+            prose-a:text-primary prose-a:font-medium hover:prose-a:text-primary/80
+            prose-table:w-full prose-table:my-8 prose-table:border-collapse
+            prose-thead:bg-muted
+            prose-th:border prose-th:border-border prose-th:p-4 prose-th:text-left prose-th:font-bold prose-th:text-foreground
+            prose-td:border prose-td:border-border prose-td:p-4 prose-td:text-foreground/90
+            prose-tr:border-b prose-tr:border-border
+            prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+          ">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {post.content}
             </ReactMarkdown>
