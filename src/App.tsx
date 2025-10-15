@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import PublicBlog from "./pages/PublicBlog";
 import PublicBlogPost from "./pages/PublicBlogPost";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import { ProtectedRoute } from "./layouts/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -37,7 +38,7 @@ const App = () => (
           </Route>
           {/* SearchFuel blog routes - must come before subdomain routes */}
           <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<PublicBlogPost />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           {/* Public blog routes */}
           <Route path="/:subdomain" element={<PublicBlog />} />
           <Route path="/:subdomain/:slug" element={<PublicBlogPost />} />
