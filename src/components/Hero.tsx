@@ -35,7 +35,7 @@ export const Hero = ({ onScanStart }: HeroProps) => {
       <div className="relative z-10 container mx-auto px-6 py-24">
         <div className="max-w-5xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/15 border border-accent/20 text-accent mb-8 animate-fade-in backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-accent/15 border border-accent/20 text-white mb-8 animate-fade-in backdrop-blur-sm">
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-semibold tracking-wide">Latest feature just launched</span>
           </div>
