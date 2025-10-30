@@ -10,6 +10,8 @@ import { LogOut, Target, Lightbulb, TrendingUp, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Hero } from "@/components/Hero";
 import { SEOComparison } from "@/components/SEOComparison";
+import SEOContentFeatures from "@/components/SEOContentFeatures";
+import SEORankingsShowcase from "@/components/SEORankingsShowcase";
 import { HowItWorks } from "@/components/HowItWorks";
 import { SocialProof } from "@/components/SocialProof";
 import { FinalCTA } from "@/components/FinalCTA";
@@ -243,14 +245,16 @@ const Index = () => {
       )}
 
       {/* Additional sections - only show if no results */}
-        {!seoResults && (
-          <>
-            <SEOComparison />
-            <HowItWorks />
-            <SocialProof />
-            <FinalCTA />
-          </>
-        )}
+      {!seoResults && (
+        <>
+          <SEOComparison />
+          <SEOContentFeatures />
+          <SEORankingsShowcase />
+          <HowItWorks />
+          <SocialProof />
+          <FinalCTA />
+        </>
+      )}
 
         <StickyURLInput 
           onSubmit={(scanUrl) => {
