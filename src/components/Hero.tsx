@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Globe, Search, FileText, CheckCircle, TrendingUp, Edit3 } from "lucide-react";
-import { useState } from "react";
+import { Globe, Search, FileText, CheckCircle, TrendingUp, Edit3, ShoppingBag, Layout, Boxes } from "lucide-react";
+import { useState, useEffect } from "react";
 import heroBackground from "@/assets/hero-background.jpg";
 
 interface HeroProps {
@@ -10,6 +10,42 @@ interface HeroProps {
 
 export const Hero = ({ onScanStart }: HeroProps) => {
   const [url, setUrl] = useState("");
+  const [currentPlatform, setCurrentPlatform] = useState(0);
+
+  const platforms = [
+    { 
+      name: "WordPress", 
+      icon: Boxes,
+      color: "rgb(33, 117, 155)",
+      bgColor: "rgba(33, 117, 155, 0.1)",
+      borderColor: "rgba(33, 117, 155, 0.2)"
+    },
+    { 
+      name: "Shopify", 
+      icon: ShoppingBag,
+      color: "rgb(150, 191, 72)",
+      bgColor: "rgba(150, 191, 72, 0.1)",
+      borderColor: "rgba(150, 191, 72, 0.2)"
+    },
+    { 
+      name: "Wix", 
+      icon: Layout,
+      color: "rgb(12, 110, 252)",
+      bgColor: "rgba(12, 110, 252, 0.1)",
+      borderColor: "rgba(12, 110, 252, 0.2)"
+    }
+  ];
+
+  const currentPlatformData = platforms[currentPlatform];
+  const PlatformIcon = currentPlatformData.icon;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPlatform((prev) => (prev + 1) % platforms.length);
+    }, 3500);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,11 +67,27 @@ export const Hero = ({ onScanStart }: HeroProps) => {
             {/* Left Column - Existing Content */}
             <div className="text-left">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-50 border border-emerald-200 mb-8 animate-fade-in">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-sm font-semibold text-gray-700">Built for HighLevel</span>
-                <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-bold rounded">LIVE</span>
-                <span className="text-sm text-gray-600">Installed in <span className="font-semibold text-emerald-600">3,800+</span> Accounts</span>
+              <div 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md mb-8 transition-all duration-500 ease-in-out"
+                style={{
+                  backgroundColor: currentPlatformData.bgColor,
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: currentPlatformData.borderColor
+                }}
+              >
+                <div 
+                  className="w-2 h-2 rounded-full animate-pulse"
+                  style={{ backgroundColor: currentPlatformData.color }}
+                />
+                <PlatformIcon className="w-4 h-4" style={{ color: currentPlatformData.color }} />
+                <span className="text-sm font-semibold text-gray-700">Built for {currentPlatformData.name}</span>
+                <span 
+                  className="px-2 py-0.5 text-white text-xs font-bold rounded"
+                  style={{ backgroundColor: currentPlatformData.color }}
+                >
+                  LIVE
+                </span>
               </div>
 
               {/* Heading */}
