@@ -9,11 +9,12 @@ import { User } from "@supabase/supabase-js";
 import { LogOut, Target, Lightbulb, TrendingUp, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Hero } from "@/components/Hero";
-import { Features } from "@/components/Features";
+import { SEOComparison } from "@/components/SEOComparison";
 import { HowItWorks } from "@/components/HowItWorks";
 import { SocialProof } from "@/components/SocialProof";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
+import { StickyURLInput } from "@/components/StickyURLInput";
 
 interface BlogIdea {
   id: string;
@@ -242,14 +243,21 @@ const Index = () => {
       )}
 
       {/* Additional sections - only show if no results */}
-      {!seoResults && (
-        <>
-          <Features />
-          <HowItWorks />
-          <SocialProof />
-          <FinalCTA />
-        </>
-      )}
+        {!seoResults && (
+          <>
+            <SEOComparison />
+            <HowItWorks />
+            <SocialProof />
+            <FinalCTA />
+          </>
+        )}
+
+        <StickyURLInput 
+          onSubmit={(scanUrl) => {
+            setUrl(scanUrl);
+            handleScan({ preventDefault: () => {} } as React.FormEvent);
+          }}
+        />
 
       <Footer />
     </div>
