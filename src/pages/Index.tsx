@@ -14,6 +14,8 @@ import SEOContentFeatures from "@/components/SEOContentFeatures";
 import SEORankingsShowcase from "@/components/SEORankingsShowcase";
 import SEOCapabilities from "@/components/SEOCapabilities";
 import SEOSetupProcess from "@/components/SEOSetupProcess";
+import { SEOTestimonials } from "@/components/SEOTestimonials";
+import { SEOFaq } from "@/components/SEOFaq";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import { StickyURLInput } from "@/components/StickyURLInput";
@@ -249,10 +251,12 @@ const Index = () => {
         <>
           <SEOComparison />
           <SEOContentFeatures />
-          <SEORankingsShowcase />
-          <SEOCapabilities />
-          <SEOSetupProcess />
-          <FinalCTA />
+            <SEORankingsShowcase />
+            <SEOCapabilities />
+            <SEOSetupProcess />
+            <SEOTestimonials />
+            <SEOFaq />
+            <FinalCTA />
         </>
       )}
 
