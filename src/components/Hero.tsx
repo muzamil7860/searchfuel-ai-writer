@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, TrendingUp, Zap } from "lucide-react";
+import { Globe, Search, FileText, CheckCircle, TrendingUp, Edit3 } from "lucide-react";
 import { useState } from "react";
 import heroBackground from "@/assets/hero-background.jpg";
 
@@ -26,61 +26,136 @@ export const Hero = ({ onScanStart }: HeroProps) => {
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 py-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-left max-w-2xl">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-50 border border-emerald-200 mb-8 animate-fade-in">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-sm font-semibold text-gray-700">Built for HighLevel</span>
-              <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-bold rounded">LIVE</span>
-              <span className="text-sm text-gray-600">Installed in <span className="font-semibold text-emerald-600">3,800+</span> Accounts</span>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left Column - Existing Content */}
+            <div className="text-left">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-50 border border-emerald-200 mb-8 animate-fade-in">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-sm font-semibold text-gray-700">Built for HighLevel</span>
+                <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-bold rounded">LIVE</span>
+                <span className="text-sm text-gray-600">Installed in <span className="font-semibold text-emerald-600">3,800+</span> Accounts</span>
+              </div>
+
+              {/* Heading */}
+              <h1 className="text-5xl md:text-7xl font-black text-gray-900 mb-6 animate-fade-in leading-tight">
+                Enhance your
+                <br />
+                <span className="text-gray-900">visibility by using AI.</span> 🤩
+              </h1>
+
+              {/* Subheading */}
+              <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-xl animate-fade-in leading-relaxed">
+                Effortlessly boost your website's presence with AI — blending intelligent technology and easy-to-use SEO solutions.
+              </p>
+
+              {/* URL Input Form */}
+              <form onSubmit={handleSubmit} className="max-w-xl mb-8 animate-fade-in">
+                <div className="flex flex-col sm:flex-row gap-3 p-1.5 bg-white rounded-xl border border-gray-200 shadow-lg">
+                  <Input
+                    type="text"
+                    placeholder="yourwebsite.com"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="flex-1 bg-transparent text-foreground border-0 h-14 text-base px-5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 font-medium"
+                    required
+                  />
+                  <Button
+                    type="submit"
+                    className="shrink-0 h-14 px-8 text-base font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+                    size="lg"
+                  >
+                    Get Started Free
+                  </Button>
+                </div>
+              </form>
+
+              {/* Social Proof */}
+              <div className="flex items-center gap-3 animate-fade-in">
+                <div className="flex -space-x-2">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 border-2 border-white" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-white" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white" />
+                </div>
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-900">3,000+</span> Trusted us to generate <span className="font-semibold text-gray-900">2M+</span> Revenue
+                </p>
+              </div>
             </div>
 
-            {/* Heading */}
-            <h1 className="text-5xl md:text-7xl font-black text-gray-900 mb-6 animate-fade-in leading-tight">
-              Enhance your
-              <br />
-              <span className="text-gray-900">visibility by using AI.</span> 🤩
-            </h1>
+            {/* Right Column - SEO Flowchart */}
+            <div className="relative animate-fade-in">
+              <div className="flex flex-col items-center space-y-4">
+                {/* Step 1: Enter URL */}
+                <div className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-full shadow-lg">
+                  <Globe className="w-5 h-5" />
+                  <span className="font-semibold">Enter Website URL</span>
+                </div>
 
-            {/* Subheading */}
-            <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-xl animate-fade-in leading-relaxed">
-              Effortlessly boost your website's presence with AI — blending intelligent technology and easy-to-use SEO solutions.
-            </p>
+                {/* Arrow */}
+                <div className="w-0.5 h-8 border-l-2 border-dashed border-gray-300" />
 
-            {/* URL Input Form */}
-            <form onSubmit={handleSubmit} className="max-w-xl mb-8 animate-fade-in">
-              <div className="flex flex-col sm:flex-row gap-3 p-1.5 bg-white rounded-xl border border-gray-200 shadow-lg">
-                <Input
-                  type="text"
-                  placeholder="yourwebsite.com"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  className="flex-1 bg-transparent text-foreground border-0 h-14 text-base px-5 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 font-medium"
-                  required
-                />
-                <Button
-                  type="submit"
-                  className="shrink-0 h-14 px-8 text-base font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
-                  size="lg"
-                >
-                  Get Started Free
-                </Button>
+                {/* Step 2: AI Scans */}
+                <div className="w-full max-w-sm p-6 bg-white rounded-xl border-2 border-gray-200 shadow-md">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Search className="w-6 h-6 text-blue-600" />
+                    <h3 className="font-bold text-gray-900">AI Scans Website</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">& Analyzes SEO</p>
+                </div>
+
+                {/* Arrow */}
+                <div className="w-0.5 h-8 border-l-2 border-dashed border-gray-300" />
+
+                {/* Step 3: Generate Content */}
+                <div className="w-full max-w-sm p-6 bg-white rounded-xl border-2 border-gray-200 shadow-md">
+                  <div className="flex items-center gap-3 mb-2">
+                    <FileText className="w-6 h-6 text-blue-600" />
+                    <h3 className="font-bold text-gray-900">Generate Keywords</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">& Content Ideas</p>
+                </div>
+
+                {/* Arrow */}
+                <div className="w-0.5 h-8 border-l-2 border-dashed border-gray-300" />
+
+                {/* Decision Point */}
+                <div className="text-center text-sm font-semibold text-gray-500 mb-2">
+                  Ready to Publish?
+                </div>
+
+                {/* Split Branches */}
+                <div className="flex gap-4 w-full max-w-sm">
+                  <div className="flex-1 p-4 bg-white rounded-lg border-2 border-blue-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold text-sm text-gray-900">Auto-Publish</span>
+                    </div>
+                    <p className="text-xs text-gray-600">to CMS</p>
+                  </div>
+                  <div className="flex-1 p-4 bg-white rounded-lg border-2 border-blue-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Edit3 className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold text-sm text-gray-900">Review</span>
+                    </div>
+                    <p className="text-xs text-gray-600">& Edit Content</p>
+                  </div>
+                </div>
+
+                {/* Arrow */}
+                <div className="w-0.5 h-8 border-l-2 border-dashed border-gray-300" />
+
+                {/* Final Step */}
+                <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="w-6 h-6" />
+                    <span className="font-bold text-lg">Rank Higher on Google 📈</span>
+                  </div>
+                </div>
               </div>
-            </form>
-
-            {/* Social Proof */}
-            <div className="flex items-center gap-3 animate-fade-in">
-              <div className="flex -space-x-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white" />
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white" />
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 border-2 border-white" />
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-white" />
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white" />
-              </div>
-              <p className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">3,000+</span> Trusted us to generate <span className="font-semibold text-gray-900">2M+</span> Revenue
-              </p>
             </div>
           </div>
         </div>
