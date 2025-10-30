@@ -12,8 +12,8 @@ import { Hero } from "@/components/Hero";
 import { SEOComparison } from "@/components/SEOComparison";
 import SEOContentFeatures from "@/components/SEOContentFeatures";
 import SEORankingsShowcase from "@/components/SEORankingsShowcase";
-import { HowItWorks } from "@/components/HowItWorks";
-import { SocialProof } from "@/components/SocialProof";
+import SEOCapabilities from "@/components/SEOCapabilities";
+import SEOSetupProcess from "@/components/SEOSetupProcess";
 import { FinalCTA } from "@/components/FinalCTA";
 import { Footer } from "@/components/Footer";
 import { StickyURLInput } from "@/components/StickyURLInput";
@@ -250,8 +250,8 @@ const Index = () => {
           <SEOComparison />
           <SEOContentFeatures />
           <SEORankingsShowcase />
-          <HowItWorks />
-          <SocialProof />
+          <SEOCapabilities />
+          <SEOSetupProcess />
           <FinalCTA />
         </>
       )}
